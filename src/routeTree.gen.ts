@@ -9,25 +9,13 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as SearchRouteImport } from './routes/search'
 import { Route as ProfileRouteImport } from './routes/profile'
-import { Route as DiaryRouteImport } from './routes/diary'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AlbumIdRouteImport } from './routes/album.$id'
 
-const SearchRoute = SearchRouteImport.update({
-  id: '/search',
-  path: '/search',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const ProfileRoute = ProfileRouteImport.update({
   id: '/profile',
   path: '/profile',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const DiaryRoute = DiaryRouteImport.update({
-  id: '/diary',
-  path: '/diary',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
@@ -43,63 +31,41 @@ const AlbumIdRoute = AlbumIdRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/diary': typeof DiaryRoute
   '/profile': typeof ProfileRoute
-  '/search': typeof SearchRoute
   '/album/$id': typeof AlbumIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/diary': typeof DiaryRoute
   '/profile': typeof ProfileRoute
-  '/search': typeof SearchRoute
   '/album/$id': typeof AlbumIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/diary': typeof DiaryRoute
   '/profile': typeof ProfileRoute
-  '/search': typeof SearchRoute
   '/album/$id': typeof AlbumIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/diary' | '/profile' | '/search' | '/album/$id'
+  fullPaths: '/' | '/profile' | '/album/$id'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/diary' | '/profile' | '/search' | '/album/$id'
-  id: '__root__' | '/' | '/diary' | '/profile' | '/search' | '/album/$id'
+  to: '/' | '/profile' | '/album/$id'
+  id: '__root__' | '/' | '/profile' | '/album/$id'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  DiaryRoute: typeof DiaryRoute
   ProfileRoute: typeof ProfileRoute
-  SearchRoute: typeof SearchRoute
   AlbumIdRoute: typeof AlbumIdRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/search': {
-      id: '/search'
-      path: '/search'
-      fullPath: '/search'
-      preLoaderRoute: typeof SearchRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/profile': {
       id: '/profile'
       path: '/profile'
       fullPath: '/profile'
       preLoaderRoute: typeof ProfileRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/diary': {
-      id: '/diary'
-      path: '/diary'
-      fullPath: '/diary'
-      preLoaderRoute: typeof DiaryRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/': {
@@ -121,11 +87,19 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  DiaryRoute: DiaryRoute,
   ProfileRoute: ProfileRoute,
-  SearchRoute: SearchRoute,
   AlbumIdRoute: AlbumIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}

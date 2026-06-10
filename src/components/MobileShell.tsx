@@ -1,47 +1,49 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import type { ReactNode } from "react";
-import { Home, Search, BookOpen, User, Plus } from "lucide-react";
+import { Compass, Plus, User } from "lucide-react";
 
 export function MobileShell({ children }: { children: ReactNode }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const isActive = (p: string) => (p === "/" ? pathname === "/" : pathname.startsWith(p));
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <nav className="sticky top-0 z-40 bg-background/80 backdrop-blur-md border-b border-border px-4 py-3 flex items-center justify-between">
+      <nav className="sticky top-0 z-40 bg-background/80 backdrop-blur-md border-b border-border px-5 py-3.5 flex items-center justify-between">
         <Link to="/" className="font-extrabold tracking-tighter text-xl">TraX</Link>
-        <div className="flex gap-6 text-[10px] font-mono uppercase tracking-widest text-muted">
-          <Link to="/" className={pathname === "/" ? "text-foreground" : ""}>Feed</Link>
-          <Link to="/diary" className={pathname === "/diary" ? "text-foreground" : ""}>Diary</Link>
-          <Link to="/profile" className={pathname === "/profile" ? "text-foreground" : ""}>Profile</Link>
-        </div>
+        <span className="text-[10px] font-mono uppercase tracking-widest text-muted">Track your music journey</span>
       </nav>
 
-      <main className="max-w-md mx-auto p-4 pb-36">{children}</main>
+      <main className="max-w-md mx-auto pb-32">{children}</main>
 
-      <div className="fixed bottom-6 left-1/2 -translate-x-1/2 w-[calc(100%-2rem)] max-w-md z-50">
-        <div className="bg-foreground text-background p-1 flex justify-around items-center rounded-sm shadow-2xl ring-4 ring-background">
-          <BottomItem to="/" active={pathname === "/"} icon={<Home className="size-4" />} />
-          <BottomItem to="/search" active={pathname === "/search"} icon={<Search className="size-4" />} />
+      <div className="fixed bottom-5 left-1/2 -translate-x-1/2 w-[calc(100%-1.5rem)] max-w-sm z-50">
+        <div className="bg-foreground/95 backdrop-blur-md text-background px-3 py-2 flex justify-between items-center rounded-full shadow-2xl ring-4 ring-background/80">
+          <NavItem to="/" active={isActive("/")} label="Explore">
+            <Compass className="size-5" strokeWidth={2.2} />
+          </NavItem>
           <Link
-            to="/album/$id"
-            params={{ id: "blue-rev" }}
-            className="size-12 bg-accent flex items-center justify-center shrink-0 -my-2 rounded-sm shadow-lg shadow-accent/30"
-            aria-label="Log album"
+            to="/add"
+            className="size-14 -my-4 bg-accent flex items-center justify-center shrink-0 rounded-full shadow-lg shadow-accent/40 ring-4 ring-background/80"
+            aria-label="Add music"
           >
-            <Plus className="size-6" strokeWidth={2.5} />
+            <Plus className="size-7" strokeWidth={2.5} />
           </Link>
-          <BottomItem to="/diary" active={pathname === "/diary"} icon={<BookOpen className="size-4" />} />
-          <BottomItem to="/profile" active={pathname === "/profile"} icon={<User className="size-4" />} />
+          <NavItem to="/profile" active={isActive("/profile")} label="Profile">
+            <User className="size-5" strokeWidth={2.2} />
+          </NavItem>
         </div>
       </div>
     </div>
   );
 }
 
-function BottomItem({ to, active, icon }: { to: string; active: boolean; icon: ReactNode }) {
+function NavItem({ to, active, label, children }: { to: string; active: boolean; label: string; children: ReactNode }) {
   return (
-    <Link to={to} className={`size-10 flex items-center justify-center transition-opacity ${active ? "opacity-100" : "opacity-40"}`}>
-      {icon}
+    <Link
+      to={to}
+      className={`flex flex-col items-center justify-center gap-0.5 px-6 py-2 transition-opacity ${active ? "opacity-100" : "opacity-40"}`}
+    >
+      {children}
+      <span className="text-[9px] font-mono uppercase tracking-widest">{label}</span>
     </Link>
   );
 }
