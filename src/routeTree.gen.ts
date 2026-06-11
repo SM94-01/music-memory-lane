@@ -13,7 +13,9 @@ import { Route as ProfileRouteImport } from './routes/profile'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AddRouteImport } from './routes/add'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as WrappedSlugRouteImport } from './routes/wrapped.$slug'
 import { Route as UHandleRouteImport } from './routes/u.$handle'
+import { Route as ArtistIdRouteImport } from './routes/artist.$id'
 import { Route as AlbumIdRouteImport } from './routes/album.$id'
 
 const ProfileRoute = ProfileRouteImport.update({
@@ -36,9 +38,19 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const WrappedSlugRoute = WrappedSlugRouteImport.update({
+  id: '/wrapped/$slug',
+  path: '/wrapped/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const UHandleRoute = UHandleRouteImport.update({
   id: '/u/$handle',
   path: '/u/$handle',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ArtistIdRoute = ArtistIdRouteImport.update({
+  id: '/artist/$id',
+  path: '/artist/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AlbumIdRoute = AlbumIdRouteImport.update({
@@ -53,7 +65,9 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/profile': typeof ProfileRoute
   '/album/$id': typeof AlbumIdRoute
+  '/artist/$id': typeof ArtistIdRoute
   '/u/$handle': typeof UHandleRoute
+  '/wrapped/$slug': typeof WrappedSlugRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -61,7 +75,9 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/profile': typeof ProfileRoute
   '/album/$id': typeof AlbumIdRoute
+  '/artist/$id': typeof ArtistIdRoute
   '/u/$handle': typeof UHandleRoute
+  '/wrapped/$slug': typeof WrappedSlugRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -70,13 +86,31 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/profile': typeof ProfileRoute
   '/album/$id': typeof AlbumIdRoute
+  '/artist/$id': typeof ArtistIdRoute
   '/u/$handle': typeof UHandleRoute
+  '/wrapped/$slug': typeof WrappedSlugRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/add' | '/auth' | '/profile' | '/album/$id' | '/u/$handle'
+  fullPaths:
+    | '/'
+    | '/add'
+    | '/auth'
+    | '/profile'
+    | '/album/$id'
+    | '/artist/$id'
+    | '/u/$handle'
+    | '/wrapped/$slug'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/add' | '/auth' | '/profile' | '/album/$id' | '/u/$handle'
+  to:
+    | '/'
+    | '/add'
+    | '/auth'
+    | '/profile'
+    | '/album/$id'
+    | '/artist/$id'
+    | '/u/$handle'
+    | '/wrapped/$slug'
   id:
     | '__root__'
     | '/'
@@ -84,7 +118,9 @@ export interface FileRouteTypes {
     | '/auth'
     | '/profile'
     | '/album/$id'
+    | '/artist/$id'
     | '/u/$handle'
+    | '/wrapped/$slug'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -93,7 +129,9 @@ export interface RootRouteChildren {
   AuthRoute: typeof AuthRoute
   ProfileRoute: typeof ProfileRoute
   AlbumIdRoute: typeof AlbumIdRoute
+  ArtistIdRoute: typeof ArtistIdRoute
   UHandleRoute: typeof UHandleRoute
+  WrappedSlugRoute: typeof WrappedSlugRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -126,11 +164,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/wrapped/$slug': {
+      id: '/wrapped/$slug'
+      path: '/wrapped/$slug'
+      fullPath: '/wrapped/$slug'
+      preLoaderRoute: typeof WrappedSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/u/$handle': {
       id: '/u/$handle'
       path: '/u/$handle'
       fullPath: '/u/$handle'
       preLoaderRoute: typeof UHandleRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/artist/$id': {
+      id: '/artist/$id'
+      path: '/artist/$id'
+      fullPath: '/artist/$id'
+      preLoaderRoute: typeof ArtistIdRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/album/$id': {
@@ -149,7 +201,9 @@ const rootRouteChildren: RootRouteChildren = {
   AuthRoute: AuthRoute,
   ProfileRoute: ProfileRoute,
   AlbumIdRoute: AlbumIdRoute,
+  ArtistIdRoute: ArtistIdRoute,
   UHandleRoute: UHandleRoute,
+  WrappedSlugRoute: WrappedSlugRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
