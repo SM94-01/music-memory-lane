@@ -1,9 +1,15 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { MobileShell } from "@/components/MobileShell";
 import { Stars } from "@/components/Stars";
-import { feed, albums, getAlbum } from "@/data/mock";
-import { Heart, MessageCircle, TrendingUp } from "lucide-react";
-import { useState } from "react";
+import { Avatar } from "@/components/Avatar";
+import { CommentsSheet } from "@/components/CommentsSheet";
+import { Heart, MessageCircle, TrendingUp, UserPlus, Check, Loader2 } from "lucide-react";
+import { useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { useMyProfile } from "@/lib/auth";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { formatDistanceToNowStrict } from "date-fns";
+import { mockCoverFor } from "@/data/mock";
 
 export const Route = createFileRoute("/")({
   head: () => ({ meta: [{ title: "Explore — TraX" }] }),
@@ -14,123 +20,243 @@ type Tab = "following" | "suggested";
 
 function ExplorePage() {
   const [tab, setTab] = useState<Tab>("following");
-
+  useEffect(() => {
+    const h = () => setTab("suggested");
+    window.addEventListener("trax:open-suggested", h);
+    return () => window.removeEventListener("trax:open-suggested", h);
+  }, []);
   return (
     <MobileShell>
       <div className="px-5 pt-5">
         <h1 className="text-3xl font-extrabold tracking-tighter mb-5">Explore</h1>
-
         <div className="flex gap-1 p-1 bg-secondary/60 rounded-full mb-6">
           <TabBtn active={tab === "following"} onClick={() => setTab("following")}>Following</TabBtn>
           <TabBtn active={tab === "suggested"} onClick={() => setTab("suggested")}>Suggested</TabBtn>
         </div>
       </div>
-
-      {tab === "following" ? <FollowingFeed /> : <Suggestions />}
+      {tab === "following" ? <FollowingFeed /> : <SuggestedTab />}
     </MobileShell>
   );
 }
 
 function TabBtn({ active, onClick, children }: { active: boolean; onClick: () => void; children: React.ReactNode }) {
   return (
-    <button
-      onClick={onClick}
-      className={`flex-1 py-2 text-xs font-bold uppercase tracking-widest rounded-full transition-all ${
-        active ? "bg-foreground text-background" : "text-muted"
-      }`}
-    >
+    <button onClick={onClick} className={`flex-1 py-2 text-xs font-bold uppercase tracking-widest rounded-full ${active ? "bg-foreground text-background" : "text-muted"}`}>
       {children}
     </button>
   );
 }
 
+type LogRow = {
+  id: string; album_key: string; title: string; artist: string; year: number | null;
+  cover_url: string | null; genre: string | null; rating: number | null; review: string | null;
+  created_at: string;
+  user: { id: string; handle: string; name: string; avatar_url: string | null } | null;
+  likes: { count: number }[];
+  comments: { count: number }[];
+};
+
 function FollowingFeed() {
+  const { data: me } = useMyProfile();
+  const { data: feed, isLoading } = useQuery({
+    queryKey: ["feed", me?.id],
+    enabled: !!me,
+    queryFn: async () => {
+      const { data: follows } = await supabase.from("follows").select("following_id").eq("follower_id", me!.id);
+      const ids = (follows ?? []).map((f) => f.following_id);
+      if (ids.length === 0) return [] as LogRow[];
+      const { data } = await supabase
+        .from("album_logs")
+        .select("id, album_key, title, artist, year, cover_url, genre, rating, review, created_at, user:profiles!album_logs_user_id_fkey(id, handle, name, avatar_url), likes(count), comments(count)")
+        .in("user_id", ids)
+        .order("created_at", { ascending: false })
+        .limit(30);
+      return (data as unknown as LogRow[]) ?? [];
+    },
+  });
+
+  if (isLoading) return <div className="px-5"><Loader2 className="size-5 animate-spin text-muted" /></div>;
+  if (!feed || feed.length === 0) {
+    return (
+      <div className="px-5 text-center py-12">
+        <p className="text-sm text-muted mb-4">You're not following anyone yet.</p>
+        <button onClick={() => {
+          const ev = new CustomEvent("trax:open-suggested");
+          window.dispatchEvent(ev);
+        }} className="text-xs font-mono uppercase tracking-widest text-accent">Discover people →</button>
+      </div>
+    );
+  }
+
   return (
-    <section className="animate-reveal px-5 space-y-12 mt-2">
-      {feed.map((item) => {
-        const album = getAlbum(item.albumId)!;
-        return (
-          <article key={item.id}>
-            <div className="flex items-center gap-3 mb-4">
-              <div className="size-7 rounded-full bg-muted/20 outline-1 outline-offset-1 outline-border" />
-              <p className="text-sm italic font-medium">
-                {item.user} <span className="text-muted not-italic font-normal">{item.action}</span>
-              </p>
-              <span className="ml-auto text-[10px] font-mono text-muted">{item.time}</span>
-            </div>
-
-            <Link to="/album/$id" params={{ id: album.id }} className="flex gap-4">
-              <img
-                src={album.cover}
-                alt={`${album.title} by ${album.artist}`}
-                loading="lazy"
-                width={512}
-                height={512}
-                className="w-32 aspect-square object-cover rounded-sm shrink-0"
-              />
-              <div className="flex flex-col justify-center min-w-0">
-                <h3 className="font-bold text-lg leading-tight text-pretty">{album.title}</h3>
-                <p className="text-sm text-muted mb-2">{album.artist} • {album.year}</p>
-                {item.rating && <Stars value={item.rating} />}
-              </div>
-            </Link>
-
-            {item.review && <p className="mt-3 text-sm text-muted leading-relaxed line-clamp-3">{item.review}</p>}
-
-            <div className="mt-3 flex gap-5 text-[11px] font-mono text-muted">
-              <button className="flex items-center gap-1.5 hover:text-accent transition-colors">
-                <Heart className="size-3.5" /> {item.likes}
-              </button>
-              <button className="flex items-center gap-1.5 hover:text-accent transition-colors">
-                <MessageCircle className="size-3.5" /> {item.comments}
-              </button>
-            </div>
-          </article>
-        );
-      })}
+    <section className="px-5 space-y-12 mt-2">
+      {feed.map((item) => <FeedCard key={item.id} item={item} />)}
     </section>
   );
 }
 
-function Suggestions() {
-  const trending = [...albums].sort((a, b) => b.avgRating - a.avgRating);
-  const hero = trending[0];
-  const rest = trending.slice(1);
+function FeedCard({ item }: { item: LogRow }) {
+  const { data: me } = useMyProfile();
+  const qc = useQueryClient();
+  const [liked, setLiked] = useState(false);
+  const [likeCount, setLikeCount] = useState(item.likes[0]?.count ?? 0);
+  const [showComments, setShowComments] = useState(false);
+  const cover = item.cover_url || mockCoverFor(item.album_key);
+
+  useEffect(() => {
+    if (!me) return;
+    supabase.from("likes").select("user_id").eq("log_id", item.id).eq("user_id", me.id).maybeSingle()
+      .then(({ data }) => setLiked(!!data));
+  }, [me, item.id]);
+
+  async function toggleLike() {
+    if (!me) return;
+    if (liked) {
+      setLiked(false); setLikeCount((c) => c - 1);
+      await supabase.from("likes").delete().eq("log_id", item.id).eq("user_id", me.id);
+    } else {
+      setLiked(true); setLikeCount((c) => c + 1);
+      await supabase.from("likes").insert({ log_id: item.id, user_id: me.id });
+    }
+    qc.invalidateQueries({ queryKey: ["feed"] });
+  }
+
+  const time = formatDistanceToNowStrict(new Date(item.created_at), { addSuffix: false }).replace(/ (year|month|week|day|hour|minute|second)s?/, (_, u) => u[0]);
 
   return (
-    <section className="animate-reveal mt-2">
-      <div className="px-5 mb-6">
-        <div className="flex items-center gap-2 text-xs font-mono uppercase tracking-[0.2em] text-accent mb-3">
-          <TrendingUp className="size-3.5" /> Trending this week
-        </div>
-        <Link to="/album/$id" params={{ id: hero.id }} className="block relative aspect-[4/5] overflow-hidden rounded-sm">
-          <img src={hero.cover} alt={hero.title} loading="lazy" width={800} height={1000} className="w-full h-full object-cover" />
-          <div className="absolute inset-0 bg-gradient-to-t from-background via-background/20 to-transparent" />
-          <div className="absolute bottom-4 left-4 right-4">
-            <span className="inline-block px-2 py-0.5 bg-accent text-accent-foreground text-[9px] font-mono uppercase tracking-widest mb-2">#1 Trending</span>
-            <h3 className="text-2xl font-extrabold tracking-tight">{hero.title}</h3>
-            <p className="text-sm text-muted">{hero.artist} • {hero.year}</p>
-            <div className="mt-2"><Stars value={hero.avgRating} size="md" /></div>
-          </div>
+    <article>
+      <div className="flex items-center gap-3 mb-4">
+        <Link to="/u/$handle" params={{ handle: item.user?.handle ?? "" }}>
+          <Avatar handle={item.user?.handle ?? ""} name={item.user?.name} url={item.user?.avatar_url} size={28} />
         </Link>
+        <p className="text-sm italic font-medium">
+          <Link to="/u/$handle" params={{ handle: item.user?.handle ?? "" }} className="not-italic font-bold hover:text-accent">{item.user?.name}</Link>
+          {" "}<span className="text-muted not-italic font-normal">listened to</span>
+        </p>
+        <span className="ml-auto text-[10px] font-mono text-muted">{time}</span>
+      </div>
+
+      <Link to="/album/$id" params={{ id: item.album_key }} className="flex gap-4">
+        {cover ? (
+          <img src={cover} alt={item.title} loading="lazy" width={512} height={512} className="w-32 aspect-square object-cover rounded-sm shrink-0" />
+        ) : (
+          <div className="w-32 aspect-square bg-secondary rounded-sm shrink-0 grid place-items-center text-2xl font-extrabold text-muted">{item.title.charAt(0)}</div>
+        )}
+        <div className="flex flex-col justify-center min-w-0">
+          <h3 className="font-bold text-lg leading-tight text-pretty">{item.title}</h3>
+          <p className="text-sm text-muted mb-2">{item.artist}{item.year ? ` • ${item.year}` : ""}</p>
+          {item.rating ? <Stars value={item.rating} /> : null}
+        </div>
+      </Link>
+
+      {item.review && <p className="mt-3 text-sm text-muted leading-relaxed line-clamp-3">{item.review}</p>}
+
+      <div className="mt-3 flex gap-5 text-[11px] font-mono text-muted">
+        <button onClick={toggleLike} className={`flex items-center gap-1.5 transition-colors ${liked ? "text-accent" : "hover:text-accent"}`}>
+          <Heart className={`size-3.5 ${liked ? "fill-current" : ""}`} /> {likeCount}
+        </button>
+        <button onClick={() => setShowComments(true)} className="flex items-center gap-1.5 hover:text-accent">
+          <MessageCircle className="size-3.5" /> {item.comments[0]?.count ?? 0}
+        </button>
+      </div>
+
+      {showComments && <CommentsSheet logId={item.id} onClose={() => setShowComments(false)} />}
+    </article>
+  );
+}
+
+function SuggestedTab() {
+  const { data: me } = useMyProfile();
+  const { data: users } = useQuery({
+    queryKey: ["suggestedUsers", me?.id],
+    enabled: !!me,
+    queryFn: async () => {
+      const { data } = await supabase.from("profiles").select("*").neq("id", me!.id).eq("is_seed", true).limit(20);
+      return data ?? [];
+    },
+  });
+  const { data: trending } = useQuery({
+    queryKey: ["trending"],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("album_logs")
+        .select("album_key, title, artist, year, cover_url, rating")
+        .not("rating", "is", null)
+        .order("rating", { ascending: false })
+        .limit(10);
+      // dedupe by album_key
+      const seen = new Set<string>();
+      return (data ?? []).filter((a) => (seen.has(a.album_key) ? false : (seen.add(a.album_key), true)));
+    },
+  });
+
+  return (
+    <section className="mt-2">
+      <div className="px-5 mb-8">
+        <div className="flex items-center gap-2 text-xs font-mono uppercase tracking-[0.2em] text-accent mb-3">
+          <TrendingUp className="size-3.5" /> People to follow
+        </div>
+        <ul className="space-y-3">
+          {users?.map((u) => <SuggestedUser key={u.id} user={u} />)}
+        </ul>
       </div>
 
       <div className="px-5">
-        <h2 className="text-xs font-mono uppercase tracking-[0.2em] text-muted mb-4">Popular reviews</h2>
+        <h2 className="text-xs font-mono uppercase tracking-[0.2em] text-muted mb-4">Top rated this week</h2>
         <div className="grid grid-cols-2 gap-3">
-          {rest.map((a) => (
-            <Link to="/album/$id" params={{ id: a.id }} key={a.id}>
-              <img src={a.cover} alt={a.title} loading="lazy" width={400} height={400} className="aspect-square w-full object-cover rounded-xs" />
-              <p className="text-xs font-bold mt-2 truncate">{a.title}</p>
-              <p className="text-[10px] text-muted truncate">{a.artist}</p>
-              <div className="mt-1 flex items-center gap-1.5">
-                <Stars value={a.avgRating} />
-                <span className="text-[9px] font-mono text-muted">{a.avgRating.toFixed(1)}</span>
-              </div>
-            </Link>
-          ))}
+          {trending?.map((a) => {
+            const cover = a.cover_url || mockCoverFor(a.album_key);
+            return (
+              <Link to="/album/$id" params={{ id: a.album_key }} key={a.album_key}>
+                {cover ? <img src={cover} alt={a.title} className="aspect-square w-full object-cover rounded-xs" /> :
+                  <div className="aspect-square w-full bg-secondary rounded-xs grid place-items-center text-2xl font-extrabold text-muted">{a.title.charAt(0)}</div>}
+                <p className="text-xs font-bold mt-2 truncate">{a.title}</p>
+                <p className="text-[10px] text-muted truncate">{a.artist}</p>
+              </Link>
+            );
+          })}
         </div>
       </div>
     </section>
+  );
+}
+
+function SuggestedUser({ user }: { user: { id: string; handle: string; name: string; identity: string | null; avatar_url: string | null } }) {
+  const { data: me } = useMyProfile();
+  const qc = useQueryClient();
+  const [following, setFollowing] = useState(false);
+  const [loaded, setLoaded] = useState(false);
+
+  useEffect(() => {
+    if (!me) return;
+    supabase.from("follows").select("follower_id").eq("follower_id", me.id).eq("following_id", user.id).maybeSingle()
+      .then(({ data }) => { setFollowing(!!data); setLoaded(true); });
+  }, [me, user.id]);
+
+  async function toggle() {
+    if (!me) return;
+    if (following) {
+      setFollowing(false);
+      await supabase.from("follows").delete().eq("follower_id", me.id).eq("following_id", user.id);
+    } else {
+      setFollowing(true);
+      await supabase.from("follows").insert({ follower_id: me.id, following_id: user.id });
+    }
+    qc.invalidateQueries({ queryKey: ["feed"] });
+  }
+
+  return (
+    <li className="flex items-center gap-3">
+      <Link to="/u/$handle" params={{ handle: user.handle }}>
+        <Avatar handle={user.handle} name={user.name} url={user.avatar_url} size={44} />
+      </Link>
+      <Link to="/u/$handle" params={{ handle: user.handle }} className="flex-1 min-w-0">
+        <p className="text-sm font-bold truncate">{user.name}</p>
+        <p className="text-[11px] text-muted truncate">{user.identity || `@${user.handle}`}</p>
+      </Link>
+      <button onClick={toggle} disabled={!loaded} className={`text-[10px] font-mono uppercase tracking-widest px-3 py-1.5 rounded-full flex items-center gap-1.5 ${following ? "border border-border text-muted" : "bg-foreground text-background"}`}>
+        {following ? <><Check className="size-3" /> Following</> : <><UserPlus className="size-3" /> Follow</>}
+      </button>
+    </li>
   );
 }

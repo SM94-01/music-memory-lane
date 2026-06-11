@@ -10,13 +10,22 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as ProfileRouteImport } from './routes/profile'
+import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AddRouteImport } from './routes/add'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as WrappedSlugRouteImport } from './routes/wrapped.$slug'
+import { Route as UHandleRouteImport } from './routes/u.$handle'
+import { Route as ArtistIdRouteImport } from './routes/artist.$id'
 import { Route as AlbumIdRouteImport } from './routes/album.$id'
 
 const ProfileRoute = ProfileRouteImport.update({
   id: '/profile',
   path: '/profile',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthRoute = AuthRouteImport.update({
+  id: '/auth',
+  path: '/auth',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AddRoute = AddRouteImport.update({
@@ -29,6 +38,21 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const WrappedSlugRoute = WrappedSlugRouteImport.update({
+  id: '/wrapped/$slug',
+  path: '/wrapped/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const UHandleRoute = UHandleRouteImport.update({
+  id: '/u/$handle',
+  path: '/u/$handle',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ArtistIdRoute = ArtistIdRouteImport.update({
+  id: '/artist/$id',
+  path: '/artist/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AlbumIdRoute = AlbumIdRouteImport.update({
   id: '/album/$id',
   path: '/album/$id',
@@ -38,35 +62,76 @@ const AlbumIdRoute = AlbumIdRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/add': typeof AddRoute
+  '/auth': typeof AuthRoute
   '/profile': typeof ProfileRoute
   '/album/$id': typeof AlbumIdRoute
+  '/artist/$id': typeof ArtistIdRoute
+  '/u/$handle': typeof UHandleRoute
+  '/wrapped/$slug': typeof WrappedSlugRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/add': typeof AddRoute
+  '/auth': typeof AuthRoute
   '/profile': typeof ProfileRoute
   '/album/$id': typeof AlbumIdRoute
+  '/artist/$id': typeof ArtistIdRoute
+  '/u/$handle': typeof UHandleRoute
+  '/wrapped/$slug': typeof WrappedSlugRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/add': typeof AddRoute
+  '/auth': typeof AuthRoute
   '/profile': typeof ProfileRoute
   '/album/$id': typeof AlbumIdRoute
+  '/artist/$id': typeof ArtistIdRoute
+  '/u/$handle': typeof UHandleRoute
+  '/wrapped/$slug': typeof WrappedSlugRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/add' | '/profile' | '/album/$id'
+  fullPaths:
+    | '/'
+    | '/add'
+    | '/auth'
+    | '/profile'
+    | '/album/$id'
+    | '/artist/$id'
+    | '/u/$handle'
+    | '/wrapped/$slug'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/add' | '/profile' | '/album/$id'
-  id: '__root__' | '/' | '/add' | '/profile' | '/album/$id'
+  to:
+    | '/'
+    | '/add'
+    | '/auth'
+    | '/profile'
+    | '/album/$id'
+    | '/artist/$id'
+    | '/u/$handle'
+    | '/wrapped/$slug'
+  id:
+    | '__root__'
+    | '/'
+    | '/add'
+    | '/auth'
+    | '/profile'
+    | '/album/$id'
+    | '/artist/$id'
+    | '/u/$handle'
+    | '/wrapped/$slug'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AddRoute: typeof AddRoute
+  AuthRoute: typeof AuthRoute
   ProfileRoute: typeof ProfileRoute
   AlbumIdRoute: typeof AlbumIdRoute
+  ArtistIdRoute: typeof ArtistIdRoute
+  UHandleRoute: typeof UHandleRoute
+  WrappedSlugRoute: typeof WrappedSlugRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -76,6 +141,13 @@ declare module '@tanstack/react-router' {
       path: '/profile'
       fullPath: '/profile'
       preLoaderRoute: typeof ProfileRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/auth': {
+      id: '/auth'
+      path: '/auth'
+      fullPath: '/auth'
+      preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/add': {
@@ -92,6 +164,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/wrapped/$slug': {
+      id: '/wrapped/$slug'
+      path: '/wrapped/$slug'
+      fullPath: '/wrapped/$slug'
+      preLoaderRoute: typeof WrappedSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/u/$handle': {
+      id: '/u/$handle'
+      path: '/u/$handle'
+      fullPath: '/u/$handle'
+      preLoaderRoute: typeof UHandleRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/artist/$id': {
+      id: '/artist/$id'
+      path: '/artist/$id'
+      fullPath: '/artist/$id'
+      preLoaderRoute: typeof ArtistIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/album/$id': {
       id: '/album/$id'
       path: '/album/$id'
@@ -105,8 +198,12 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AddRoute: AddRoute,
+  AuthRoute: AuthRoute,
   ProfileRoute: ProfileRoute,
   AlbumIdRoute: AlbumIdRoute,
+  ArtistIdRoute: ArtistIdRoute,
+  UHandleRoute: UHandleRoute,
+  WrappedSlugRoute: WrappedSlugRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
