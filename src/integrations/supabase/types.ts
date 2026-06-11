@@ -14,13 +14,247 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      album_logs: {
+        Row: {
+          album_key: string
+          artist: string
+          cover_url: string | null
+          created_at: string
+          genre: string | null
+          id: string
+          listened_at: string
+          rating: number | null
+          review: string | null
+          title: string
+          user_id: string
+          year: number | null
+        }
+        Insert: {
+          album_key: string
+          artist: string
+          cover_url?: string | null
+          created_at?: string
+          genre?: string | null
+          id?: string
+          listened_at?: string
+          rating?: number | null
+          review?: string | null
+          title: string
+          user_id: string
+          year?: number | null
+        }
+        Update: {
+          album_key?: string
+          artist?: string
+          cover_url?: string | null
+          created_at?: string
+          genre?: string | null
+          id?: string
+          listened_at?: string
+          rating?: number | null
+          review?: string | null
+          title?: string
+          user_id?: string
+          year?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "album_logs_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      comments: {
+        Row: {
+          body: string
+          created_at: string
+          id: string
+          log_id: string
+          user_id: string
+        }
+        Insert: {
+          body: string
+          created_at?: string
+          id?: string
+          log_id: string
+          user_id: string
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          id?: string
+          log_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "comments_log_id_fkey"
+            columns: ["log_id"]
+            isOneToOne: false
+            referencedRelation: "album_logs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "comments_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      follows: {
+        Row: {
+          created_at: string
+          follower_id: string
+          following_id: string
+        }
+        Insert: {
+          created_at?: string
+          follower_id: string
+          following_id: string
+        }
+        Update: {
+          created_at?: string
+          follower_id?: string
+          following_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "follows_follower_id_fkey"
+            columns: ["follower_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "follows_following_id_fkey"
+            columns: ["following_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      likes: {
+        Row: {
+          created_at: string
+          log_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          log_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          log_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "likes_log_id_fkey"
+            columns: ["log_id"]
+            isOneToOne: false
+            referencedRelation: "album_logs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "likes_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      notification_prefs: {
+        Row: {
+          comments: boolean
+          likes: boolean
+          new_follower: boolean
+          updated_at: string
+          user_id: string
+          weekly_wrapped: boolean
+        }
+        Insert: {
+          comments?: boolean
+          likes?: boolean
+          new_follower?: boolean
+          updated_at?: string
+          user_id: string
+          weekly_wrapped?: boolean
+        }
+        Update: {
+          comments?: boolean
+          likes?: boolean
+          new_follower?: boolean
+          updated_at?: string
+          user_id?: string
+          weekly_wrapped?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notification_prefs_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          auth_user_id: string | null
+          avatar_url: string | null
+          bio_long: string | null
+          bio_short: string | null
+          created_at: string
+          handle: string
+          id: string
+          identity: string | null
+          is_seed: boolean
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          auth_user_id?: string | null
+          avatar_url?: string | null
+          bio_long?: string | null
+          bio_short?: string | null
+          created_at?: string
+          handle: string
+          id?: string
+          identity?: string | null
+          is_seed?: boolean
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          auth_user_id?: string | null
+          avatar_url?: string | null
+          bio_long?: string | null
+          bio_short?: string | null
+          created_at?: string
+          handle?: string
+          id?: string
+          identity?: string | null
+          is_seed?: boolean
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      current_profile_id: { Args: never; Returns: string }
     }
     Enums: {
       [_ in never]: never
