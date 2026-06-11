@@ -20,6 +20,11 @@ type Tab = "following" | "suggested";
 
 function ExplorePage() {
   const [tab, setTab] = useState<Tab>("following");
+  useEffect(() => {
+    const h = () => setTab("suggested");
+    window.addEventListener("trax:open-suggested", h);
+    return () => window.removeEventListener("trax:open-suggested", h);
+  }, []);
   return (
     <MobileShell>
       <div className="px-5 pt-5">
