@@ -3,17 +3,17 @@ import { supabase } from "@/integrations/supabase/client";
 import { X, Loader2, LogOut } from "lucide-react";
 import { useNavigate } from "@tanstack/react-router";
 
-type Prefs = { new_follower: boolean; likes: boolean; comments: boolean; weekly_wrapped: boolean };
+type Prefs = { new_follower: boolean; likes: boolean; comments: boolean };
 
 export function SettingsSheet({ profileId, onClose }: { profileId: string; onClose: () => void }) {
   const navigate = useNavigate();
-  const [prefs, setPrefs] = useState<Prefs>({ new_follower: true, likes: true, comments: true, weekly_wrapped: true });
+  const [prefs, setPrefs] = useState<Prefs>({ new_follower: true, likes: true, comments: true });
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     (async () => {
-      const { data } = await supabase.from("notification_prefs").select("*").eq("user_id", profileId).maybeSingle();
-      if (data) setPrefs({ new_follower: data.new_follower, likes: data.likes, comments: data.comments, weekly_wrapped: data.weekly_wrapped });
+      const { data } = await supabase.from("notification_prefs").select("new_follower, likes, comments").eq("user_id", profileId).maybeSingle();
+      if (data) setPrefs({ new_follower: data.new_follower, likes: data.likes, comments: data.comments });
       setLoading(false);
     })();
   }, [profileId]);
@@ -44,7 +44,6 @@ export function SettingsSheet({ profileId, onClose }: { profileId: string; onClo
             <Row label="New followers" desc="Tell me when someone follows me" on={prefs.new_follower} onChange={() => toggle("new_follower")} />
             <Row label="Likes" desc="Likes on my logs and reviews" on={prefs.likes} onChange={() => toggle("likes")} />
             <Row label="Comments" desc="Replies on my reviews" on={prefs.comments} onChange={() => toggle("comments")} />
-            <Row label="Weekly Wrapped" desc="A digest of my listening week" on={prefs.weekly_wrapped} onChange={() => toggle("weekly_wrapped")} />
           </div>
         )}
         <button onClick={signOut} className="mt-6 w-full border border-border py-3 rounded-full text-xs font-bold uppercase tracking-widest flex items-center justify-center gap-2 text-muted">
