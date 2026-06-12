@@ -13,7 +13,6 @@ import { Route as ProfileRouteImport } from './routes/profile'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AddRouteImport } from './routes/add'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as WrappedSlugRouteImport } from './routes/wrapped.$slug'
 import { Route as UHandleRouteImport } from './routes/u.$handle'
 import { Route as ArtistIdRouteImport } from './routes/artist.$id'
 import { Route as AlbumIdRouteImport } from './routes/album.$id'
@@ -36,11 +35,6 @@ const AddRoute = AddRouteImport.update({
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const WrappedSlugRoute = WrappedSlugRouteImport.update({
-  id: '/wrapped/$slug',
-  path: '/wrapped/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
 const UHandleRoute = UHandleRouteImport.update({
@@ -67,7 +61,6 @@ export interface FileRoutesByFullPath {
   '/album/$id': typeof AlbumIdRoute
   '/artist/$id': typeof ArtistIdRoute
   '/u/$handle': typeof UHandleRoute
-  '/wrapped/$slug': typeof WrappedSlugRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -77,7 +70,6 @@ export interface FileRoutesByTo {
   '/album/$id': typeof AlbumIdRoute
   '/artist/$id': typeof ArtistIdRoute
   '/u/$handle': typeof UHandleRoute
-  '/wrapped/$slug': typeof WrappedSlugRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -88,7 +80,6 @@ export interface FileRoutesById {
   '/album/$id': typeof AlbumIdRoute
   '/artist/$id': typeof ArtistIdRoute
   '/u/$handle': typeof UHandleRoute
-  '/wrapped/$slug': typeof WrappedSlugRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -100,7 +91,6 @@ export interface FileRouteTypes {
     | '/album/$id'
     | '/artist/$id'
     | '/u/$handle'
-    | '/wrapped/$slug'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -110,7 +100,6 @@ export interface FileRouteTypes {
     | '/album/$id'
     | '/artist/$id'
     | '/u/$handle'
-    | '/wrapped/$slug'
   id:
     | '__root__'
     | '/'
@@ -120,7 +109,6 @@ export interface FileRouteTypes {
     | '/album/$id'
     | '/artist/$id'
     | '/u/$handle'
-    | '/wrapped/$slug'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -131,7 +119,6 @@ export interface RootRouteChildren {
   AlbumIdRoute: typeof AlbumIdRoute
   ArtistIdRoute: typeof ArtistIdRoute
   UHandleRoute: typeof UHandleRoute
-  WrappedSlugRoute: typeof WrappedSlugRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -162,13 +149,6 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/wrapped/$slug': {
-      id: '/wrapped/$slug'
-      path: '/wrapped/$slug'
-      fullPath: '/wrapped/$slug'
-      preLoaderRoute: typeof WrappedSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/u/$handle': {
@@ -203,8 +183,17 @@ const rootRouteChildren: RootRouteChildren = {
   AlbumIdRoute: AlbumIdRoute,
   ArtistIdRoute: ArtistIdRoute,
   UHandleRoute: UHandleRoute,
-  WrappedSlugRoute: WrappedSlugRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
