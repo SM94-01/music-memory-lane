@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth, useMyProfile } from "@/lib/auth";
 import { Avatar } from "@/components/Avatar";
+import { useQueryClient } from "@tanstack/react-query";
 import { X, Send, Loader2 } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 
@@ -12,9 +13,10 @@ type Comment = {
   user: { handle: string; name: string; avatar_url: string | null } | null;
 };
 
-export function CommentsSheet({ logId, onClose }: { logId: string; onClose: () => void }) {
+export function CommentsSheet({ logId, onClose, onCountChange }: { logId: string; onClose: () => void; onCountChange?: (n: number) => void }) {
   const { session } = useAuth();
   const { data: me } = useMyProfile();
+  const qc = useQueryClient();
   const [comments, setComments] = useState<Comment[]>([]);
   const [loading, setLoading] = useState(true);
   const [text, setText] = useState("");
@@ -36,7 +38,12 @@ export function CommentsSheet({ logId, onClose }: { logId: string; onClose: () =
     setSending(true);
     const { error } = await supabase.from("comments").insert({ log_id: logId, user_id: me.id, body: text.trim() });
     setSending(false);
-    if (!error) { setText(""); await load(); }
+    if (!error) {
+      setText("");
+      await load();
+      onCountChange?.(comments.length + 1);
+      qc.invalidateQueries({ queryKey: ["feed"] });
+    }
   }
 
   return (

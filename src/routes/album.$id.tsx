@@ -3,7 +3,7 @@ import { MobileShell } from "@/components/MobileShell";
 import { Stars } from "@/components/Stars";
 import { Avatar } from "@/components/Avatar";
 import { useEffect, useState } from "react";
-import { ArrowLeft, Check, Bookmark, Loader2 } from "lucide-react";
+import { ArrowLeft, Check, Bookmark, BookmarkCheck, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useMyProfile } from "@/lib/auth";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -27,6 +27,28 @@ function AlbumPage() {
   const [logged, setLogged] = useState(false);
   const [myLogId, setMyLogId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [watchId, setWatchId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!me) return;
+    supabase.from("watchlist").select("id").eq("user_id", me.id).eq("album_key", id).maybeSingle()
+      .then(({ data }) => setWatchId(data?.id ?? null));
+  }, [me, id]);
+
+  async function toggleWatch() {
+    if (!me || !info) return;
+    if (watchId) {
+      await supabase.from("watchlist").delete().eq("id", watchId);
+      setWatchId(null);
+    } else {
+      const { data } = await supabase.from("watchlist").insert({
+        user_id: me.id, album_key: id, title: info.title, artist: info.artist,
+        year: info.year, cover_url: info.cover, genre: info.genre,
+      }).select("id").single();
+      if (data) setWatchId(data.id);
+    }
+    qc.invalidateQueries({ queryKey: ["watchlist"] });
+  }
 
   // Resolve album info: mock first, then DB log, then MusicBrainz
   useEffect(() => {
@@ -167,8 +189,8 @@ function AlbumPage() {
             {logged ? (
               <button onClick={unlog} className="py-3 font-bold text-sm rounded-sm border border-border text-muted">Remove</button>
             ) : (
-              <button className="py-3 font-bold text-sm rounded-sm border border-border flex items-center justify-center gap-2 text-muted">
-                <Bookmark className="size-4" /> To listen
+              <button onClick={toggleWatch} className={`py-3 font-bold text-sm rounded-sm border flex items-center justify-center gap-2 ${watchId ? "border-accent text-accent" : "border-border text-muted"}`}>
+                {watchId ? <><BookmarkCheck className="size-4" /> Saved</> : <><Bookmark className="size-4" /> To listen</>}
               </button>
             )}
           </div>
