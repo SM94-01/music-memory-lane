@@ -100,6 +100,7 @@ function FeedCard({ item }: { item: LogRow }) {
   const qc = useQueryClient();
   const [liked, setLiked] = useState(false);
   const [likeCount, setLikeCount] = useState(item.likes[0]?.count ?? 0);
+  const [commentCount, setCommentCount] = useState(item.comments[0]?.count ?? 0);
   const [showComments, setShowComments] = useState(false);
   const cover = item.cover_url || mockCoverFor(item.album_key);
 
@@ -108,6 +109,10 @@ function FeedCard({ item }: { item: LogRow }) {
     supabase.from("likes").select("user_id").eq("log_id", item.id).eq("user_id", me.id).maybeSingle()
       .then(({ data }) => setLiked(!!data));
   }, [me, item.id]);
+
+  useEffect(() => {
+    setCommentCount(item.comments[0]?.count ?? 0);
+  }, [item.comments]);
 
   async function toggleLike() {
     if (!me) return;
@@ -155,12 +160,12 @@ function FeedCard({ item }: { item: LogRow }) {
         <button onClick={toggleLike} className={`flex items-center gap-1.5 transition-colors ${liked ? "text-accent" : "hover:text-accent"}`}>
           <Heart className={`size-3.5 ${liked ? "fill-current" : ""}`} /> {likeCount}
         </button>
-        <button onClick={() => setShowComments(true)} className="flex items-center gap-1.5 hover:text-accent">
-          <MessageCircle className="size-3.5" /> {item.comments[0]?.count ?? 0}
+        <button onClick={() => setShowComments(true)} className={`flex items-center gap-1.5 hover:text-accent ${commentCount > 0 ? "text-foreground" : ""}`}>
+          <MessageCircle className={`size-3.5 ${commentCount > 0 ? "fill-current" : ""}`} /> {commentCount}
         </button>
       </div>
 
-      {showComments && <CommentsSheet logId={item.id} onClose={() => setShowComments(false)} />}
+      {showComments && <CommentsSheet logId={item.id} onClose={() => setShowComments(false)} onCountChange={setCommentCount} />}
     </article>
   );
 }
@@ -171,8 +176,34 @@ function SuggestedTab() {
     queryKey: ["suggestedUsers", me?.id],
     enabled: !!me,
     queryFn: async () => {
-      const { data } = await supabase.from("profiles").select("*").neq("id", me!.id).eq("is_seed", true).limit(20);
-      return data ?? [];
+      // 1) my taste fingerprint
+      const { data: myLogs } = await supabase.from("album_logs").select("genre, artist").eq("user_id", me!.id);
+      const myGenres = new Set<string>();
+      const myArtists = new Set<string>();
+      (myLogs ?? []).forEach((l) => { if (l.genre) myGenres.add(l.genre.toLowerCase()); if (l.artist) myArtists.add(l.artist.toLowerCase()); });
+
+      // 2) candidates: not me, not already followed
+      const { data: follows } = await supabase.from("follows").select("following_id").eq("follower_id", me!.id);
+      const followedIds = new Set((follows ?? []).map((f) => f.following_id));
+      followedIds.add(me!.id);
+      const { data: candidates } = await supabase.from("profiles").select("id, handle, name, identity, avatar_url").limit(60);
+      const pool = (candidates ?? []).filter((u) => !followedIds.has(u.id));
+      if (pool.length === 0) return [];
+
+      // 3) score each candidate by genre/artist overlap
+      const ids = pool.map((u) => u.id);
+      const { data: theirLogs } = await supabase.from("album_logs").select("user_id, genre, artist").in("user_id", ids);
+      const scoreById = new Map<string, number>();
+      (theirLogs ?? []).forEach((l) => {
+        let s = 0;
+        if (l.genre && myGenres.has(l.genre.toLowerCase())) s += 2;
+        if (l.artist && myArtists.has(l.artist.toLowerCase())) s += 3;
+        scoreById.set(l.user_id, (scoreById.get(l.user_id) ?? 0) + s);
+      });
+      const scored = pool.map((u) => ({ ...u, _score: scoreById.get(u.id) ?? 0 }));
+      // tie-break: a tiny stable random based on id so empty-taste users still get an order
+      scored.sort((a, b) => b._score - a._score || a.handle.localeCompare(b.handle));
+      return scored.slice(0, 20);
     },
   });
   const { data: trending } = useQuery({
@@ -184,7 +215,6 @@ function SuggestedTab() {
         .not("rating", "is", null)
         .order("rating", { ascending: false })
         .limit(10);
-      // dedupe by album_key
       const seen = new Set<string>();
       return (data ?? []).filter((a) => (seen.has(a.album_key) ? false : (seen.add(a.album_key), true)));
     },
@@ -196,9 +226,13 @@ function SuggestedTab() {
         <div className="flex items-center gap-2 text-xs font-mono uppercase tracking-[0.2em] text-accent mb-3">
           <TrendingUp className="size-3.5" /> People to follow
         </div>
-        <ul className="space-y-3">
-          {users?.map((u) => <SuggestedUser key={u.id} user={u} />)}
-        </ul>
+        {users && users.length === 0 ? (
+          <p className="text-sm text-muted">You already follow everyone we suggest. Nice taste.</p>
+        ) : (
+          <ul className="space-y-3">
+            {users?.map((u) => <SuggestedUser key={u.id} user={u} score={(u as any)._score ?? 0} />)}
+          </ul>
+        )}
       </div>
 
       <div className="px-5">
@@ -221,27 +255,16 @@ function SuggestedTab() {
   );
 }
 
-function SuggestedUser({ user }: { user: { id: string; handle: string; name: string; identity: string | null; avatar_url: string | null } }) {
+function SuggestedUser({ user, score }: { user: { id: string; handle: string; name: string; identity: string | null; avatar_url: string | null }; score: number }) {
   const { data: me } = useMyProfile();
   const qc = useQueryClient();
-  const [following, setFollowing] = useState(false);
-  const [loaded, setLoaded] = useState(false);
+  const [busy, setBusy] = useState(false);
 
-  useEffect(() => {
-    if (!me) return;
-    supabase.from("follows").select("follower_id").eq("follower_id", me.id).eq("following_id", user.id).maybeSingle()
-      .then(({ data }) => { setFollowing(!!data); setLoaded(true); });
-  }, [me, user.id]);
-
-  async function toggle() {
-    if (!me) return;
-    if (following) {
-      setFollowing(false);
-      await supabase.from("follows").delete().eq("follower_id", me.id).eq("following_id", user.id);
-    } else {
-      setFollowing(true);
-      await supabase.from("follows").insert({ follower_id: me.id, following_id: user.id });
-    }
+  async function follow() {
+    if (!me || busy) return;
+    setBusy(true);
+    await supabase.from("follows").insert({ follower_id: me.id, following_id: user.id });
+    qc.invalidateQueries({ queryKey: ["suggestedUsers"] });
     qc.invalidateQueries({ queryKey: ["feed"] });
   }
 
@@ -252,10 +275,13 @@ function SuggestedUser({ user }: { user: { id: string; handle: string; name: str
       </Link>
       <Link to="/u/$handle" params={{ handle: user.handle }} className="flex-1 min-w-0">
         <p className="text-sm font-bold truncate">{user.name}</p>
-        <p className="text-[11px] text-muted truncate">{user.identity || `@${user.handle}`}</p>
+        <p className="text-[11px] text-muted truncate">
+          {user.identity || `@${user.handle}`}
+          {score > 0 && <span className="text-accent ml-1.5">• similar taste</span>}
+        </p>
       </Link>
-      <button onClick={toggle} disabled={!loaded} className={`text-[10px] font-mono uppercase tracking-widest px-3 py-1.5 rounded-full flex items-center gap-1.5 ${following ? "border border-border text-muted" : "bg-foreground text-background"}`}>
-        {following ? <><Check className="size-3" /> Following</> : <><UserPlus className="size-3" /> Follow</>}
+      <button onClick={follow} disabled={busy} className="text-[10px] font-mono uppercase tracking-widest px-3 py-1.5 rounded-full flex items-center gap-1.5 bg-foreground text-background disabled:opacity-50">
+        <UserPlus className="size-3" /> Follow
       </button>
     </li>
   );
