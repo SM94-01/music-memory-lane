@@ -172,6 +172,48 @@ export type Database = {
           },
         ]
       }
+      messages: {
+        Row: {
+          body: string
+          created_at: string
+          id: string
+          read_at: string | null
+          recipient_id: string
+          sender_id: string
+        }
+        Insert: {
+          body: string
+          created_at?: string
+          id?: string
+          read_at?: string | null
+          recipient_id: string
+          sender_id: string
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          id?: string
+          read_at?: string | null
+          recipient_id?: string
+          sender_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "messages_recipient_id_fkey"
+            columns: ["recipient_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "messages_sender_id_fkey"
+            columns: ["sender_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       notification_prefs: {
         Row: {
           comments: boolean
@@ -179,7 +221,6 @@ export type Database = {
           new_follower: boolean
           updated_at: string
           user_id: string
-          weekly_wrapped: boolean
         }
         Insert: {
           comments?: boolean
@@ -187,7 +228,6 @@ export type Database = {
           new_follower?: boolean
           updated_at?: string
           user_id: string
-          weekly_wrapped?: boolean
         }
         Update: {
           comments?: boolean
@@ -195,7 +235,6 @@ export type Database = {
           new_follower?: boolean
           updated_at?: string
           user_id?: string
-          weekly_wrapped?: boolean
         }
         Relationships: [
           {
@@ -248,6 +287,53 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      watchlist: {
+        Row: {
+          album_key: string
+          artist: string
+          cover_url: string | null
+          created_at: string
+          done: boolean
+          genre: string | null
+          id: string
+          title: string
+          user_id: string
+          year: number | null
+        }
+        Insert: {
+          album_key: string
+          artist: string
+          cover_url?: string | null
+          created_at?: string
+          done?: boolean
+          genre?: string | null
+          id?: string
+          title: string
+          user_id: string
+          year?: number | null
+        }
+        Update: {
+          album_key?: string
+          artist?: string
+          cover_url?: string | null
+          created_at?: string
+          done?: boolean
+          genre?: string | null
+          id?: string
+          title?: string
+          user_id?: string
+          year?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "watchlist_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {

@@ -11,7 +11,6 @@ export function EditProfileDialog({ profile, onClose }: { profile: Profile; onCl
   const [bioShort, setBioShort] = useState(profile.bio_short ?? "");
   const [bioLong, setBioLong] = useState(profile.bio_long ?? "");
   const [identity, setIdentity] = useState(profile.identity ?? "");
-  const [avatarUrl, setAvatarUrl] = useState(profile.avatar_url ?? "");
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
 
@@ -20,7 +19,7 @@ export function EditProfileDialog({ profile, onClose }: { profile: Profile; onCl
     const { error } = await supabase.from("profiles").update({
       name, handle: handle.toLowerCase().replace(/[^a-z0-9_]/g, ""),
       bio_short: bioShort || null, bio_long: bioLong || null,
-      identity: identity || null, avatar_url: avatarUrl || null,
+      identity: identity || null,
       updated_at: new Date().toISOString(),
     }).eq("id", profile.id);
     setBusy(false);
@@ -36,6 +35,9 @@ export function EditProfileDialog({ profile, onClose }: { profile: Profile; onCl
           <h2 className="text-xl font-extrabold tracking-tight">Edit profile</h2>
           <button onClick={onClose} className="p-2 -m-2"><X className="size-5" /></button>
         </div>
+        <p className="text-[10px] font-mono uppercase tracking-widest text-muted mb-4">
+          Tap your avatar on the profile to change your photo.
+        </p>
         <div className="space-y-4">
           <Field label="Name"><input value={name} onChange={(e) => setName(e.target.value)} className={inp} /></Field>
           <Field label="Handle"><input value={handle} onChange={(e) => setHandle(e.target.value)} className={inp} /></Field>
@@ -44,7 +46,6 @@ export function EditProfileDialog({ profile, onClose }: { profile: Profile; onCl
           <Field label="Long bio">
             <textarea value={bioLong} onChange={(e) => setBioLong(e.target.value)} rows={4} className={`${inp} resize-none`} />
           </Field>
-          <Field label="Avatar URL"><input value={avatarUrl} placeholder="https://…" onChange={(e) => setAvatarUrl(e.target.value)} className={inp} /></Field>
           {err && <p className="text-xs text-destructive">{err}</p>}
           <button onClick={save} disabled={busy} className="w-full bg-accent text-accent-foreground py-3 rounded-full text-xs font-bold uppercase tracking-widest flex items-center justify-center gap-2 disabled:opacity-50">
             {busy && <Loader2 className="size-4 animate-spin" />} Save changes

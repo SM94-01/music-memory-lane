@@ -1,27 +1,35 @@
-import { Link } from "@tanstack/react-router";
+import { Link, useNavigate } from "@tanstack/react-router";
 import { useState, useEffect } from "react";
 import { Avatar } from "@/components/Avatar";
 import { Stars } from "@/components/Stars";
 import { EditProfileDialog } from "@/components/EditProfileDialog";
 import { SettingsSheet } from "@/components/SettingsSheet";
-import { Settings, Grid3x3, BookOpen, Sparkles, UserPlus, Check, Share2, Pencil, Loader2 } from "lucide-react";
+import { Settings, Grid3x3, BookOpen, ListChecks, UserPlus, Check, Share2, Pencil, Loader2, MessageSquare, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useMyProfile, type Profile } from "@/lib/auth";
+import { useMyProfile, useAuth, type Profile } from "@/lib/auth";
 import { mockCoverFor } from "@/data/mock";
 
-type Tab = "posts" | "diary" | "wrapped";
+type Tab = "posts" | "diary" | "tolisten";
 type Log = {
   id: string; album_key: string; title: string; artist: string; year: number | null;
   cover_url: string | null; rating: number | null; review: string | null; listened_at: string; genre: string | null;
 };
+type Watch = {
+  id: string; album_key: string; title: string; artist: string; year: number | null;
+  cover_url: string | null; genre: string | null; done: boolean; created_at: string;
+};
 
 export function ProfileView({ profile, fromProfile = false }: { profile: Profile; fromProfile?: boolean }) {
   const { data: me } = useMyProfile();
+  const { session } = useAuth();
+  const navigate = useNavigate();
+  const qc = useQueryClient();
   const isMe = me?.id === profile.id;
   const [tab, setTab] = useState<Tab>("posts");
   const [editing, setEditing] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
 
   const { data: logs } = useQuery({
     queryKey: ["logs", profile.id],
@@ -32,6 +40,19 @@ export function ProfileView({ profile, fromProfile = false }: { profile: Profile
         .eq("user_id", profile.id)
         .order("listened_at", { ascending: false });
       return (data as Log[]) ?? [];
+    },
+  });
+
+  const { data: watchlist } = useQuery({
+    queryKey: ["watchlist", profile.id],
+    queryFn: async (): Promise<Watch[]> => {
+      const { data } = await supabase
+        .from("watchlist")
+        .select("id, album_key, title, artist, year, cover_url, genre, done, created_at")
+        .eq("user_id", profile.id)
+        .order("done", { ascending: true })
+        .order("created_at", { ascending: false });
+      return (data as Watch[]) ?? [];
     },
   });
 
@@ -57,6 +78,26 @@ export function ProfileView({ profile, fromProfile = false }: { profile: Profile
     }
   }
 
+  async function uploadAvatar(file: File) {
+    if (!isMe || !session) return;
+    setUploadingAvatar(true);
+    try {
+      const ext = file.name.split(".").pop() || "jpg";
+      const path = `${session.user.id}/avatar-${Date.now()}.${ext}`;
+      const { error: upErr } = await supabase.storage.from("avatars").upload(path, file, { upsert: true, contentType: file.type });
+      if (upErr) throw upErr;
+      // private bucket → signed URL with 10-year TTL
+      const { data: signed, error: sErr } = await supabase.storage.from("avatars").createSignedUrl(path, 60 * 60 * 24 * 365 * 10);
+      if (sErr) throw sErr;
+      await supabase.from("profiles").update({ avatar_url: signed.signedUrl, updated_at: new Date().toISOString() }).eq("id", profile.id);
+      qc.invalidateQueries();
+    } catch (e: any) {
+      alert("Upload failed: " + (e?.message ?? "unknown"));
+    } finally {
+      setUploadingAvatar(false);
+    }
+  }
+
   const albumLinkState = fromProfile ? { from: "profile" as const } : undefined;
 
   return (
@@ -69,7 +110,15 @@ export function ProfileView({ profile, fromProfile = false }: { profile: Profile
       </div>
 
       <div className="px-5 pt-4 flex items-center gap-5">
-        <Avatar handle={profile.handle} name={profile.name} url={profile.avatar_url} size={80} ring />
+        <Avatar
+          handle={profile.handle}
+          name={profile.name}
+          url={profile.avatar_url}
+          size={80}
+          ring
+          onUpload={isMe ? uploadAvatar : undefined}
+          uploading={uploadingAvatar}
+        />
         <div className="flex-1 grid grid-cols-3 text-center">
           <Stat value={counts?.tracked ?? 0} label="Albums" />
           <Stat value={counts?.followers ?? 0} label="Followers" />
@@ -89,22 +138,32 @@ export function ProfileView({ profile, fromProfile = false }: { profile: Profile
 
         <div className="flex gap-2 mt-4">
           {isMe ? (
-            <button onClick={() => setEditing(true)} className="flex-1 bg-foreground text-background py-2 rounded-sm text-xs font-bold uppercase tracking-widest flex items-center justify-center gap-2">
-              <Pencil className="size-3.5" /> Edit profile
-            </button>
+            <>
+              <button onClick={() => setEditing(true)} className="flex-1 bg-foreground text-background py-2 rounded-sm text-xs font-bold uppercase tracking-widest flex items-center justify-center gap-2">
+                <Pencil className="size-3.5" /> Edit profile
+              </button>
+              <button onClick={share} className="flex-1 border border-border py-2 rounded-sm text-xs font-bold uppercase tracking-widest flex items-center justify-center gap-2">
+                <Share2 className="size-3.5" /> Share
+              </button>
+            </>
           ) : (
-            <FollowButton targetId={profile.id} />
+            <>
+              <FollowButton targetId={profile.id} />
+              <button
+                onClick={() => navigate({ to: "/messages/$handle", params: { handle: profile.handle } })}
+                className="flex-1 border border-border py-2 rounded-sm text-xs font-bold uppercase tracking-widest flex items-center justify-center gap-2"
+              >
+                <MessageSquare className="size-3.5" /> Message
+              </button>
+            </>
           )}
-          <button onClick={share} className="flex-1 border border-border py-2 rounded-sm text-xs font-bold uppercase tracking-widest flex items-center justify-center gap-2">
-            <Share2 className="size-3.5" /> Share
-          </button>
         </div>
       </div>
 
       <div className="mt-6 border-y border-border grid grid-cols-3">
         <TabBtn active={tab === "posts"} onClick={() => setTab("posts")} icon={<Grid3x3 className="size-4" />} />
         <TabBtn active={tab === "diary"} onClick={() => setTab("diary")} icon={<BookOpen className="size-4" />} />
-        <TabBtn active={tab === "wrapped"} onClick={() => setTab("wrapped")} icon={<Sparkles className="size-4" />} />
+        <TabBtn active={tab === "tolisten"} onClick={() => setTab("tolisten")} icon={<ListChecks className="size-4" />} />
       </div>
 
       {!logs && <div className="py-8 flex justify-center"><Loader2 className="size-5 animate-spin text-muted" /></div>}
@@ -134,7 +193,7 @@ export function ProfileView({ profile, fromProfile = false }: { profile: Profile
       )}
 
       {tab === "diary" && logs && <DiaryView logs={logs} fromProfile={fromProfile} />}
-      {tab === "wrapped" && logs && <WrappedView logs={logs} handle={profile.handle} />}
+      {tab === "tolisten" && <ToListenView items={watchlist} isMe={isMe} fromProfile={fromProfile} />}
 
       {editing && me && <EditProfileDialog profile={me} onClose={() => setEditing(false)} />}
       {settingsOpen && me && <SettingsSheet profileId={me.id} onClose={() => setSettingsOpen(false)} />}
@@ -227,47 +286,60 @@ function DiaryView({ logs, fromProfile }: { logs: Log[]; fromProfile: boolean })
   );
 }
 
-function WrappedView({ logs, handle }: { logs: Log[]; handle: string }) {
-  // Build auto playlists
-  const byGenre = new Map<string, Log[]>();
-  logs.forEach((l) => { if (l.genre) { if (!byGenre.has(l.genre)) byGenre.set(l.genre, []); byGenre.get(l.genre)!.push(l); } });
-  const topGenre = Array.from(byGenre.entries()).sort((a, b) => b[1].length - a[1].length)[0];
+function ToListenView({ items, isMe, fromProfile }: { items: Watch[] | undefined; isMe: boolean; fromProfile: boolean }) {
+  const qc = useQueryClient();
+  if (!items) return <div className="py-8 flex justify-center"><Loader2 className="size-5 animate-spin text-muted" /></div>;
+  if (items.length === 0) {
+    return (
+      <p className="text-sm text-muted text-center py-12 px-5">
+        {isMe ? "No albums in your to-listen list yet. Open any album and tap “To listen” to save it here." : "Nothing saved here yet."}
+      </p>
+    );
+  }
+  const albumLinkState = fromProfile ? { from: "profile" as const } : undefined;
 
-  const byArtist = new Map<string, Log[]>();
-  logs.forEach((l) => { if (!byArtist.has(l.artist)) byArtist.set(l.artist, []); byArtist.get(l.artist)!.push(l); });
-  const topArtist = Array.from(byArtist.entries()).sort((a, b) => b[1].length - a[1].length)[0];
-
-  const topRated = [...logs].filter((l) => (l.rating ?? 0) >= 4).slice(0, 12);
-  const recent = logs.slice(0, 10);
-
-  const playlists = [
-    { slug: "top-rated", title: "Top-rated picks", subtitle: `${topRated.length} albums you loved`, items: topRated },
-    topGenre ? { slug: `genre-${topGenre[0]}`, title: `Your ${topGenre[0]} core`, subtitle: `${topGenre[1].length} albums`, items: topGenre[1] } : null,
-    topArtist && topArtist[1].length > 1 ? { slug: `artist-${topArtist[0]}`, title: `On rotation: ${topArtist[0]}`, subtitle: `${topArtist[1].length} albums`, items: topArtist[1] } : null,
-    { slug: "recent", title: "Recently spinning", subtitle: `Last ${recent.length} albums`, items: recent },
-  ].filter(Boolean) as { slug: string; title: string; subtitle: string; items: Log[] }[];
+  async function toggleDone(w: Watch) {
+    await supabase.from("watchlist").update({ done: !w.done }).eq("id", w.id);
+    qc.invalidateQueries({ queryKey: ["watchlist"] });
+  }
+  async function remove(w: Watch) {
+    await supabase.from("watchlist").delete().eq("id", w.id);
+    qc.invalidateQueries({ queryKey: ["watchlist"] });
+  }
 
   return (
-    <div className="px-5 py-6 space-y-3">
-      {playlists.map((p) => (
-        <Link key={p.slug} to="/wrapped/$slug" params={{ slug: p.slug }} search={{ u: handle }} className="flex items-center gap-4 border border-border rounded-sm p-3 hover:border-accent transition-colors">
-          <div className="flex -space-x-3">
-            {p.items.slice(0, 3).map((it) => {
-              const cover = it.cover_url || mockCoverFor(it.album_key);
-              return cover ? (
-                <img key={it.id} src={cover} alt="" className="size-12 object-cover rounded-xs ring-2 ring-background" />
-              ) : (
-                <div key={it.id} className="size-12 bg-secondary rounded-xs ring-2 ring-background" />
-              );
-            })}
+    <div className="px-5 py-5 space-y-2">
+      {items.map((w) => {
+        const cover = w.cover_url || mockCoverFor(w.album_key);
+        return (
+          <div key={w.id} className={`flex items-center gap-3 border border-border rounded-sm p-2.5 ${w.done ? "opacity-50" : ""}`}>
+            {isMe ? (
+              <button
+                onClick={() => toggleDone(w)}
+                className={`size-5 rounded-sm border-2 shrink-0 grid place-items-center ${w.done ? "bg-accent border-accent" : "border-muted"}`}
+                aria-label={w.done ? "Mark as not listened" : "Mark as listened"}
+              >
+                {w.done && <Check className="size-3.5 text-accent-foreground" strokeWidth={3} />}
+              </button>
+            ) : (
+              <div className="size-5 shrink-0" />
+            )}
+            <Link to="/album/$id" params={{ id: w.album_key }} state={albumLinkState as any} className="flex items-center gap-3 flex-1 min-w-0">
+              {cover ? <img src={cover} alt={w.title} loading="lazy" className="size-12 object-cover rounded-xs shrink-0" /> :
+                <div className="size-12 bg-secondary rounded-xs shrink-0" />}
+              <div className="min-w-0 flex-1">
+                <p className={`text-sm font-bold truncate ${w.done ? "line-through" : ""}`}>{w.title}</p>
+                <p className="text-[11px] text-muted truncate">{w.artist}{w.year ? ` • ${w.year}` : ""}</p>
+              </div>
+            </Link>
+            {isMe && (
+              <button onClick={() => remove(w)} className="text-muted hover:text-destructive p-1.5" aria-label="Remove">
+                <Trash2 className="size-4" />
+              </button>
+            )}
           </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-bold truncate">{p.title}</p>
-            <p className="text-[10px] font-mono text-muted uppercase tracking-widest">{p.subtitle}</p>
-          </div>
-        </Link>
-      ))}
-      {playlists.length === 0 && <p className="text-sm text-muted text-center py-8">Log a few albums to unlock your Wrapped.</p>}
+        );
+      })}
     </div>
   );
 }

@@ -13,8 +13,8 @@ import { Route as ProfileRouteImport } from './routes/profile'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AddRouteImport } from './routes/add'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as WrappedSlugRouteImport } from './routes/wrapped.$slug'
 import { Route as UHandleRouteImport } from './routes/u.$handle'
+import { Route as MessagesHandleRouteImport } from './routes/messages.$handle'
 import { Route as ArtistIdRouteImport } from './routes/artist.$id'
 import { Route as AlbumIdRouteImport } from './routes/album.$id'
 
@@ -38,14 +38,14 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const WrappedSlugRoute = WrappedSlugRouteImport.update({
-  id: '/wrapped/$slug',
-  path: '/wrapped/$slug',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const UHandleRoute = UHandleRouteImport.update({
   id: '/u/$handle',
   path: '/u/$handle',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MessagesHandleRoute = MessagesHandleRouteImport.update({
+  id: '/messages/$handle',
+  path: '/messages/$handle',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ArtistIdRoute = ArtistIdRouteImport.update({
@@ -66,8 +66,8 @@ export interface FileRoutesByFullPath {
   '/profile': typeof ProfileRoute
   '/album/$id': typeof AlbumIdRoute
   '/artist/$id': typeof ArtistIdRoute
+  '/messages/$handle': typeof MessagesHandleRoute
   '/u/$handle': typeof UHandleRoute
-  '/wrapped/$slug': typeof WrappedSlugRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -76,8 +76,8 @@ export interface FileRoutesByTo {
   '/profile': typeof ProfileRoute
   '/album/$id': typeof AlbumIdRoute
   '/artist/$id': typeof ArtistIdRoute
+  '/messages/$handle': typeof MessagesHandleRoute
   '/u/$handle': typeof UHandleRoute
-  '/wrapped/$slug': typeof WrappedSlugRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -87,8 +87,8 @@ export interface FileRoutesById {
   '/profile': typeof ProfileRoute
   '/album/$id': typeof AlbumIdRoute
   '/artist/$id': typeof ArtistIdRoute
+  '/messages/$handle': typeof MessagesHandleRoute
   '/u/$handle': typeof UHandleRoute
-  '/wrapped/$slug': typeof WrappedSlugRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -99,8 +99,8 @@ export interface FileRouteTypes {
     | '/profile'
     | '/album/$id'
     | '/artist/$id'
+    | '/messages/$handle'
     | '/u/$handle'
-    | '/wrapped/$slug'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -109,8 +109,8 @@ export interface FileRouteTypes {
     | '/profile'
     | '/album/$id'
     | '/artist/$id'
+    | '/messages/$handle'
     | '/u/$handle'
-    | '/wrapped/$slug'
   id:
     | '__root__'
     | '/'
@@ -119,8 +119,8 @@ export interface FileRouteTypes {
     | '/profile'
     | '/album/$id'
     | '/artist/$id'
+    | '/messages/$handle'
     | '/u/$handle'
-    | '/wrapped/$slug'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -130,8 +130,8 @@ export interface RootRouteChildren {
   ProfileRoute: typeof ProfileRoute
   AlbumIdRoute: typeof AlbumIdRoute
   ArtistIdRoute: typeof ArtistIdRoute
+  MessagesHandleRoute: typeof MessagesHandleRoute
   UHandleRoute: typeof UHandleRoute
-  WrappedSlugRoute: typeof WrappedSlugRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -164,18 +164,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/wrapped/$slug': {
-      id: '/wrapped/$slug'
-      path: '/wrapped/$slug'
-      fullPath: '/wrapped/$slug'
-      preLoaderRoute: typeof WrappedSlugRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/u/$handle': {
       id: '/u/$handle'
       path: '/u/$handle'
       fullPath: '/u/$handle'
       preLoaderRoute: typeof UHandleRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/messages/$handle': {
+      id: '/messages/$handle'
+      path: '/messages/$handle'
+      fullPath: '/messages/$handle'
+      preLoaderRoute: typeof MessagesHandleRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/artist/$id': {
@@ -202,8 +202,8 @@ const rootRouteChildren: RootRouteChildren = {
   ProfileRoute: ProfileRoute,
   AlbumIdRoute: AlbumIdRoute,
   ArtistIdRoute: ArtistIdRoute,
+  MessagesHandleRoute: MessagesHandleRoute,
   UHandleRoute: UHandleRoute,
-  WrappedSlugRoute: WrappedSlugRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
