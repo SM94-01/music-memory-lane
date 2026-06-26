@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 import type { Profile } from "@/lib/auth";
-import { X, Loader2, Lock, Check } from "lucide-react";
+import { X, Loader2, Lock } from "lucide-react";
 import { IDENTITIES, computeTasteStats, identityByKey } from "@/lib/identities";
 
 export function EditProfileDialog({ profile, onClose }: { profile: Profile; onClose: () => void }) {
@@ -64,36 +64,27 @@ export function EditProfileDialog({ profile, onClose }: { profile: Profile; onCl
           <Field label="Handle"><input value={handle} onChange={(e) => setHandle(e.target.value)} className={inp} /></Field>
 
           <div>
-            <span className="text-[9px] font-mono uppercase tracking-widest text-muted mb-2 block">
+            <span className="text-[9px] font-mono uppercase tracking-widest text-muted mb-1.5 block">
               Identity {stats && <span className="text-accent ml-1">— {items.filter((i) => i.isUnlocked).length}/{items.length} unlocked</span>}
             </span>
-            <div className="grid grid-cols-2 gap-2">
-              {items.map((i) => {
-                const selected = identity === i.key;
-                return (
-                  <button
-                    key={i.key}
-                    type="button"
-                    disabled={!i.isUnlocked}
-                    onClick={() => setIdentity(i.key)}
-                    className={`relative text-left p-2.5 border rounded-sm transition-colors ${
-                      selected ? "border-accent bg-accent/10" :
-                      i.isUnlocked ? "border-border hover:border-foreground/40" :
-                      "border-border/50 opacity-50 cursor-not-allowed"
-                    }`}
-                  >
-                    <div className="flex items-center gap-1.5 mb-0.5">
-                      <span className="text-base leading-none">{i.emoji}</span>
-                      <span className="text-xs font-bold truncate">{i.label}</span>
-                      {selected && <Check className="size-3 text-accent ml-auto" />}
-                      {!i.isUnlocked && <Lock className="size-3 text-muted ml-auto" />}
-                    </div>
-                    <p className="text-[10px] text-muted leading-snug">{i.description}</p>
-                  </button>
-                );
-              })}
+            <div className="relative">
+              <select
+                value={identity}
+                onChange={(e) => setIdentity(e.target.value)}
+                className={`${inp} appearance-none pr-8`}
+              >
+                {items.map((i) => (
+                  <option key={i.key} value={i.key} disabled={!i.isUnlocked}>
+                    {i.emoji} {i.label}{!i.isUnlocked ? " (locked)" : ""} — {i.description}
+                  </option>
+                ))}
+              </select>
+              <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-muted">
+                {items.find((i) => i.key === identity)?.isUnlocked ? "▾" : <Lock className="size-3.5" />}
+              </span>
             </div>
           </div>
+
 
           <Field label="Short bio"><input maxLength={80} value={bioShort} onChange={(e) => setBioShort(e.target.value)} className={inp} /></Field>
           <Field label="Long bio">
