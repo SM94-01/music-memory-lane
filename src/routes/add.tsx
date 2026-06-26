@@ -1,17 +1,20 @@
-import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { MobileShell } from "@/components/MobileShell";
-import { Search as SearchIcon, Loader2, Disc3, Mic2, Tag, ArrowLeft } from "lucide-react";
+import { Search as SearchIcon, Loader2, Disc3, Mic2, Tag, ArrowLeft, Sparkles } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { GENRES } from "@/data/mock";
 import { Avatar } from "@/components/Avatar";
+import { useQuery } from "@tanstack/react-query";
+import { useMyProfile } from "@/lib/auth";
+import { fetchTasteFingerprint } from "@/lib/taste";
 
 export const Route = createFileRoute("/add")({
   head: () => ({ meta: [{ title: "Add music — TraX" }] }),
   component: AddPage,
 });
 
-type ReleaseGroup = { id: string; title: string; "first-release-date"?: string; "primary-type"?: string; "artist-credit"?: { name: string }[] };
-type Artist = { id: string; name: string; country?: string; disambiguation?: string };
+type ReleaseGroup = { id: string; title: string; "first-release-date"?: string; "primary-type"?: string; "artist-credit"?: { name: string }[]; tags?: { name: string }[] };
+type Artist = { id: string; name: string; country?: string; disambiguation?: string; tags?: { name: string }[] };
 type Mode = "albums" | "artists" | "genres";
 
 function AddPage() {
@@ -23,6 +26,15 @@ function AddPage() {
   const [error, setError] = useState<string | null>(null);
   const [selectedGenre, setSelectedGenre] = useState<string | null>(null);
   const abortRef = useRef<AbortController | null>(null);
+
+  const { data: me } = useMyProfile();
+  const { data: taste } = useQuery({
+    queryKey: ["taste", me?.id],
+    enabled: !!me,
+    queryFn: () => fetchTasteFingerprint(me!.id),
+  });
+  const myGenres = taste?.topGenres ?? [];
+  const myArtists = taste?.topArtists ?? [];
 
   useEffect(() => { setQ(""); setSelectedGenre(null); }, [mode]);
 
@@ -38,13 +50,13 @@ function AddPage() {
         const r = await fetch(`https://musicbrainz.org/ws/2/${path}/?query=${encodeURIComponent(q)}&fmt=json&limit=20`, { signal: ctrl.signal, headers: { Accept: "application/json" } });
         if (!r.ok) throw new Error("Search failed");
         const j = await r.json();
-        if (mode === "albums") setAlbums(j["release-groups"] ?? []);
-        else setArtists(j.artists ?? []);
+        if (mode === "albums") setAlbums(rankAlbums(j["release-groups"] ?? [], myGenres, myArtists));
+        else setArtists(rankArtists(j.artists ?? [], myGenres));
       } catch (e) { if ((e as Error).name !== "AbortError") setError("Couldn't reach MusicBrainz."); }
       finally { setLoading(false); }
     }, 350);
     return () => { clearTimeout(t); ctrl.abort(); };
-  }, [q, mode]);
+  }, [q, mode, myGenres.join("|"), myArtists.join("|")]);
 
   return (
     <MobileShell>
@@ -74,24 +86,71 @@ function AddPage() {
       <div className="px-5 mt-6">
         {error && <p className="text-xs text-destructive">{error}</p>}
 
-        {mode === "albums" && (
-          <AlbumResults items={albums} empty={!!q && !loading} />
-        )}
-        {mode === "artists" && (
-          <ArtistResults items={artists} empty={!!q && !loading} />
-        )}
+        {mode === "albums" && (q ? <AlbumResults items={albums} empty={!loading} /> : <SuggestedFeed kind="albums" genres={myGenres} />)}
+        {mode === "artists" && (q ? <ArtistResults items={artists} empty={!loading} /> : <SuggestedFeed kind="artists" genres={myGenres} />)}
         {mode === "genres" && (
           selectedGenre ? <GenreView genre={selectedGenre} onBack={() => setSelectedGenre(null)} />
-          : <GenresList query={q} onPick={setSelectedGenre} />
-        )}
-
-        {mode !== "genres" && !q && !loading && (
-          <p className="text-sm text-muted leading-relaxed mt-8">
-            Find any album or artist. Tap a result to view its info, log it, or save it for later.
-          </p>
+          : <GenresList query={q} onPick={setSelectedGenre} topGenres={myGenres} />
         )}
       </div>
     </MobileShell>
+  );
+}
+
+function rankAlbums(items: ReleaseGroup[], genres: string[], artists: string[]) {
+  if (!genres.length && !artists.length) return items;
+  const score = (it: ReleaseGroup) => {
+    let s = 0;
+    const tags = (it.tags ?? []).map((t) => t.name.toLowerCase());
+    if (tags.some((t) => genres.includes(t))) s += 2;
+    const artist = (it["artist-credit"]?.[0]?.name ?? "").toLowerCase();
+    if (artists.includes(artist)) s += 3;
+    return s;
+  };
+  return [...items].sort((a, b) => score(b) - score(a));
+}
+function rankArtists(items: Artist[], genres: string[]) {
+  if (!genres.length) return items;
+  const score = (it: Artist) => {
+    const tags = (it.tags ?? []).map((t) => t.name.toLowerCase());
+    return tags.some((t) => genres.includes(t)) ? 2 : 0;
+  };
+  return [...items].sort((a, b) => score(b) - score(a));
+}
+
+function SuggestedFeed({ kind, genres }: { kind: "albums" | "artists"; genres: string[] }) {
+  const enabled = genres.length > 0;
+  const { data, isLoading } = useQuery({
+    queryKey: ["suggested-mb", kind, genres.join("|")],
+    enabled,
+    queryFn: async () => {
+      const tagQuery = genres.slice(0, 3).map((g) => `tag:"${g}"`).join(" OR ");
+      const path = kind === "albums" ? "release-group" : "artist";
+      const r = await fetch(`https://musicbrainz.org/ws/2/${path}/?query=${encodeURIComponent(tagQuery)}&fmt=json&limit=20`, { headers: { Accept: "application/json" } });
+      const j = await r.json();
+      if (kind === "albums") return (j["release-groups"] ?? []) as ReleaseGroup[];
+      return (j.artists ?? []) as Artist[];
+    },
+  });
+
+  if (!enabled) {
+    return (
+      <p className="text-sm text-muted leading-relaxed mt-8">
+        Log a few albums and we'll start suggesting {kind} that match your taste. For now, search anything above.
+      </p>
+    );
+  }
+  return (
+    <div>
+      <div className="flex items-center gap-2 text-[10px] font-mono uppercase tracking-[0.2em] text-accent mb-3">
+        <Sparkles className="size-3.5" /> For your taste · {genres.slice(0, 3).join(" · ")}
+      </div>
+      {isLoading ? <div className="py-6 flex justify-center"><Loader2 className="size-5 animate-spin text-muted" /></div> :
+        kind === "albums"
+          ? <AlbumResults items={(data as ReleaseGroup[]) ?? []} empty={false} />
+          : <ArtistResults items={(data as Artist[]) ?? []} empty={false} />
+      }
+    </div>
   );
 }
 
@@ -144,25 +203,42 @@ function ArtistResults({ items, empty }: { items: Artist[]; empty: boolean }) {
   );
 }
 
-function GenresList({ query, onPick }: { query: string; onPick: (g: string) => void }) {
+function GenresList({ query, onPick, topGenres }: { query: string; onPick: (g: string) => void; topGenres: string[] }) {
   const filtered = useMemo(() => {
     const sorted = [...GENRES].sort();
     if (!query.trim()) return sorted;
     const q = query.toLowerCase();
     return sorted.filter((g) => g.toLowerCase().includes(q));
   }, [query]);
+  const top = topGenres.map((g) => GENRES.find((G) => G.toLowerCase() === g)).filter(Boolean) as string[];
   return (
-    <ul className="divide-y divide-border">
-      {filtered.map((g) => (
-        <li key={g}>
-          <button onClick={() => onPick(g)} className="w-full py-3 flex items-center justify-between text-left">
-            <span className="text-sm font-bold">{g}</span>
-            <span className="text-[10px] font-mono uppercase tracking-widest text-muted">Explore →</span>
-          </button>
-        </li>
-      ))}
-      {filtered.length === 0 && <li className="py-6 text-sm text-muted">No genre matches.</li>}
-    </ul>
+    <div>
+      {top.length > 0 && !query.trim() && (
+        <div className="mb-6">
+          <div className="flex items-center gap-2 text-[10px] font-mono uppercase tracking-[0.2em] text-accent mb-2">
+            <Sparkles className="size-3.5" /> Your genres
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {top.map((g) => (
+              <button key={g} onClick={() => onPick(g)} className="px-3 py-1.5 text-xs font-bold rounded-full bg-accent/10 text-accent border border-accent/30">
+                {g}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+      <ul className="divide-y divide-border">
+        {filtered.map((g) => (
+          <li key={g}>
+            <button onClick={() => onPick(g)} className="w-full py-3 flex items-center justify-between text-left">
+              <span className="text-sm font-bold">{g}</span>
+              <span className="text-[10px] font-mono uppercase tracking-widest text-muted">Explore →</span>
+            </button>
+          </li>
+        ))}
+        {filtered.length === 0 && <li className="py-6 text-sm text-muted">No genre matches.</li>}
+      </ul>
+    </div>
   );
 }
 

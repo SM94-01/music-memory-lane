@@ -298,10 +298,6 @@ function ToListenView({ items, isMe, fromProfile }: { items: Watch[] | undefined
   }
   const albumLinkState = fromProfile ? { from: "profile" as const } : undefined;
 
-  async function toggleDone(w: Watch) {
-    await supabase.from("watchlist").update({ done: !w.done }).eq("id", w.id);
-    qc.invalidateQueries({ queryKey: ["watchlist"] });
-  }
   async function remove(w: Watch) {
     await supabase.from("watchlist").delete().eq("id", w.id);
     qc.invalidateQueries({ queryKey: ["watchlist"] });
@@ -312,28 +308,18 @@ function ToListenView({ items, isMe, fromProfile }: { items: Watch[] | undefined
       {items.map((w) => {
         const cover = w.cover_url || mockCoverFor(w.album_key);
         return (
-          <div key={w.id} className={`flex items-center gap-3 border border-border rounded-sm p-2.5 ${w.done ? "opacity-50" : ""}`}>
-            {isMe ? (
-              <button
-                onClick={() => toggleDone(w)}
-                className={`size-5 rounded-sm border-2 shrink-0 grid place-items-center ${w.done ? "bg-accent border-accent" : "border-muted"}`}
-                aria-label={w.done ? "Mark as not listened" : "Mark as listened"}
-              >
-                {w.done && <Check className="size-3.5 text-accent-foreground" strokeWidth={3} />}
-              </button>
-            ) : (
-              <div className="size-5 shrink-0" />
-            )}
+          <div key={w.id} className="flex items-center gap-3 border border-border rounded-sm p-2.5">
             <Link to="/album/$id" params={{ id: w.album_key }} state={albumLinkState as any} className="flex items-center gap-3 flex-1 min-w-0">
               {cover ? <img src={cover} alt={w.title} loading="lazy" className="size-12 object-cover rounded-xs shrink-0" /> :
                 <div className="size-12 bg-secondary rounded-xs shrink-0" />}
               <div className="min-w-0 flex-1">
-                <p className={`text-sm font-bold truncate ${w.done ? "line-through" : ""}`}>{w.title}</p>
+                <p className="text-sm font-bold truncate">{w.title}</p>
                 <p className="text-[11px] text-muted truncate">{w.artist}{w.year ? ` • ${w.year}` : ""}</p>
               </div>
+              <span className="text-[10px] font-mono uppercase tracking-widest text-accent shrink-0">Rate →</span>
             </Link>
             {isMe && (
-              <button onClick={() => remove(w)} className="text-muted hover:text-destructive p-1.5" aria-label="Remove">
+              <button onClick={() => remove(w)} className="text-muted hover:text-destructive p-1.5 shrink-0" aria-label="Remove">
                 <Trash2 className="size-4" />
               </button>
             )}
