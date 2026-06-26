@@ -140,18 +140,10 @@ function SuggestedFeed({ kind, genres }: { kind: "albums" | "artists"; genres: s
       </p>
     );
   }
-  return (
-    <div>
-      <div className="flex items-center gap-2 text-[10px] font-mono uppercase tracking-[0.2em] text-accent mb-3">
-        <Sparkles className="size-3.5" /> For your taste · {genres.slice(0, 3).join(" · ")}
-      </div>
-      {isLoading ? <div className="py-6 flex justify-center"><Loader2 className="size-5 animate-spin text-muted" /></div> :
-        kind === "albums"
-          ? <AlbumResults items={(data as ReleaseGroup[]) ?? []} empty={false} />
-          : <ArtistResults items={(data as Artist[]) ?? []} empty={false} />
-      }
-    </div>
-  );
+  if (isLoading) return <div className="py-6 flex justify-center"><Loader2 className="size-5 animate-spin text-muted" /></div>;
+  return kind === "albums"
+    ? <AlbumResults items={(data as ReleaseGroup[]) ?? []} empty={false} />
+    : <ArtistResults items={(data as Artist[]) ?? []} empty={false} />;
 }
 
 function AlbumResults({ items, empty }: { items: ReleaseGroup[]; empty: boolean }) {
@@ -210,24 +202,10 @@ function GenresList({ query, onPick, topGenres }: { query: string; onPick: (g: s
     const q = query.toLowerCase();
     return sorted.filter((g) => g.toLowerCase().includes(q));
   }, [query]);
-  const top = topGenres.map((g) => GENRES.find((G) => G.toLowerCase() === g)).filter(Boolean) as string[];
   return (
     <div>
-      {top.length > 0 && !query.trim() && (
-        <div className="mb-6">
-          <div className="flex items-center gap-2 text-[10px] font-mono uppercase tracking-[0.2em] text-accent mb-2">
-            <Sparkles className="size-3.5" /> Your genres
-          </div>
-          <div className="flex flex-wrap gap-2">
-            {top.map((g) => (
-              <button key={g} onClick={() => onPick(g)} className="px-3 py-1.5 text-xs font-bold rounded-full bg-accent/10 text-accent border border-accent/30">
-                {g}
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
       <ul className="divide-y divide-border">
+
         {filtered.map((g) => (
           <li key={g}>
             <button onClick={() => onPick(g)} className="w-full py-3 flex items-center justify-between text-left">
