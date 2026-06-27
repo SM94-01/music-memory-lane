@@ -8,6 +8,7 @@ type Prefs = { new_follower: boolean; likes: boolean; comments: boolean };
 
 export function SettingsSheet({ profileId, onClose }: { profileId: string; onClose: () => void }) {
   const navigate = useNavigate();
+  const { theme, setTheme } = useTheme();
   const [prefs, setPrefs] = useState<Prefs>({ new_follower: true, likes: true, comments: true });
   const [loading, setLoading] = useState(true);
 
