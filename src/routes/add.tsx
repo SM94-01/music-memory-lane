@@ -269,9 +269,9 @@ function GenreView({ genre, onBack }: { genre: string; onBack: () => void }) {
               const artist = a["artist-credit"]?.map((c) => c.name).join(", ") ?? "";
               return (
                 <Link to="/album/$id" params={{ id: a.id }} key={a.id}>
-                  <img src={cover} alt="" loading="lazy"
-                    onError={(e) => { (e.currentTarget as HTMLImageElement).style.visibility = "hidden"; }}
-                    className="aspect-square w-full object-cover rounded-xs bg-secondary" />
+                  <div className="aspect-square w-full rounded-xs overflow-hidden bg-secondary [container-type:inline-size]">
+                    <AlbumCover src={cover} title={a.title} artist={artist} className="size-full" />
+                  </div>
                   <p className="text-xs font-bold mt-2 truncate">{a.title}</p>
                   <p className="text-[10px] text-muted truncate">{artist}</p>
                 </Link>
