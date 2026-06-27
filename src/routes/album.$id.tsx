@@ -8,6 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useMyProfile } from "@/lib/auth";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { getMockAlbum, mockCoverFor } from "@/data/mock";
+import { AlbumCover } from "@/components/AlbumCover";
 
 type AlbumInfo = { title: string; artist: string; year: number | null; cover: string | null; genre: string | null };
 
