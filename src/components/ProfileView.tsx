@@ -9,6 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMyProfile, useAuth, type Profile } from "@/lib/auth";
 import { mockCoverFor } from "@/data/mock";
+import { AlbumCover } from "@/components/AlbumCover";
 
 type Tab = "posts" | "diary" | "tolisten";
 type Log = {
