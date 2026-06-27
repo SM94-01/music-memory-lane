@@ -143,11 +143,9 @@ function FeedCard({ item }: { item: LogRow }) {
       </div>
 
       <Link to="/album/$id" params={{ id: item.album_key }} className="flex gap-4">
-        {cover ? (
-          <img src={cover} alt={item.title} loading="lazy" width={512} height={512} className="w-32 aspect-square object-cover rounded-sm shrink-0" />
-        ) : (
-          <div className="w-32 aspect-square bg-secondary rounded-sm shrink-0 grid place-items-center text-2xl font-extrabold text-muted">{item.title.charAt(0)}</div>
-        )}
+        <div className="w-32 aspect-square shrink-0 rounded-sm overflow-hidden bg-secondary [container-type:inline-size]">
+          <AlbumCover src={cover} title={item.title} artist={item.artist} className="w-full h-full" />
+        </div>
         <div className="flex flex-col justify-center min-w-0">
           <h3 className="font-bold text-lg leading-tight text-pretty">{item.title}</h3>
           <p className="text-sm text-muted mb-2">{item.artist}{item.year ? ` • ${item.year}` : ""}</p>
