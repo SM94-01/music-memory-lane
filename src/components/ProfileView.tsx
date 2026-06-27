@@ -308,8 +308,9 @@ function ToListenView({ items, isMe, fromProfile }: { items: Watch[] | undefined
         return (
           <div key={w.id} className="flex items-center gap-3 border border-border rounded-sm p-2.5">
             <Link to="/album/$id" params={{ id: w.album_key }} state={albumLinkState as any} className="flex items-center gap-3 flex-1 min-w-0">
-              {cover ? <img src={cover} alt={w.title} loading="lazy" className="size-12 object-cover rounded-xs shrink-0" /> :
-                <div className="size-12 bg-secondary rounded-xs shrink-0" />}
+              <div className="size-12 rounded-xs shrink-0 overflow-hidden bg-secondary [container-type:inline-size]">
+                <AlbumCover src={cover} title={w.title} artist={w.artist} className="size-full" />
+              </div>
               <div className="min-w-0 flex-1">
                 <p className="text-sm font-bold truncate">{w.title}</p>
                 <p className="text-[11px] text-muted truncate">{w.artist}{w.year ? ` • ${w.year}` : ""}</p>
