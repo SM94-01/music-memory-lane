@@ -7,6 +7,7 @@ import { Avatar } from "@/components/Avatar";
 import { useQuery } from "@tanstack/react-query";
 import { useMyProfile } from "@/lib/auth";
 import { fetchTasteFingerprint } from "@/lib/taste";
+import { AlbumCover } from "@/components/AlbumCover";
 
 export const Route = createFileRoute("/add")({
   head: () => ({ meta: [{ title: "Add music — TraX" }] }),
