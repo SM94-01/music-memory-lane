@@ -157,9 +157,9 @@ function AlbumResults({ items, empty }: { items: ReleaseGroup[]; empty: boolean 
         return (
           <li key={a.id}>
             <Link to="/album/$id" params={{ id: a.id }} className="py-3 flex items-center gap-4">
-              <img src={cover} alt="" loading="lazy" width={56} height={56}
-                onError={(e) => { (e.currentTarget as HTMLImageElement).style.visibility = "hidden"; }}
-                className="size-14 object-cover rounded-xs shrink-0 bg-secondary" />
+              <div className="size-14 shrink-0 rounded-xs overflow-hidden bg-secondary [container-type:inline-size]">
+                <AlbumCover src={cover} title={a.title} artist={artist} className="size-full" />
+              </div>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-bold truncate">{a.title}</p>
                 <p className="text-[11px] text-muted truncate">
