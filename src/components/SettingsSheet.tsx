@@ -48,6 +48,30 @@ export function SettingsSheet({ profileId, onClose }: { profileId: string; onClo
             <Row label="Comments" desc="Replies on my reviews" on={prefs.comments} onChange={() => toggle("comments")} />
           </div>
         )}
+        <div className="mt-6">
+          <h3 className="text-[10px] font-mono uppercase tracking-widest text-muted mb-3">Theme</h3>
+          <div className="grid grid-cols-3 gap-2">
+            {THEMES.map((t) => (
+              <button
+                key={t.key}
+                onClick={() => setTheme(t.key)}
+                className={`relative rounded-xl border p-2 text-left transition-colors ${theme === t.key ? "border-accent" : "border-border"}`}
+              >
+                <div className="flex gap-1 mb-2">
+                  {t.swatch.map((c, i) => (
+                    <span key={i} className="size-4 rounded-full border border-border" style={{ background: c }} />
+                  ))}
+                </div>
+                <p className="text-[11px] font-bold leading-tight">{t.label}</p>
+                {theme === t.key && (
+                  <span className="absolute top-1.5 right-1.5 size-4 rounded-full bg-accent text-accent-foreground grid place-items-center">
+                    <Check className="size-3" strokeWidth={3} />
+                  </span>
+                )}
+              </button>
+            ))}
+          </div>
+        </div>
         <button onClick={signOut} className="mt-6 w-full border border-border py-3 rounded-full text-xs font-bold uppercase tracking-widest flex items-center justify-center gap-2 text-muted">
           <LogOut className="size-4" /> Sign out
         </button>
