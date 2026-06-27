@@ -241,8 +241,9 @@ function SuggestedTab() {
             const cover = a.cover_url || mockCoverFor(a.album_key);
             return (
               <Link to="/album/$id" params={{ id: a.album_key }} key={a.album_key}>
-                {cover ? <img src={cover} alt={a.title} className="aspect-square w-full object-cover rounded-xs" /> :
-                  <div className="aspect-square w-full bg-secondary rounded-xs grid place-items-center text-2xl font-extrabold text-muted">{a.title.charAt(0)}</div>}
+                <div className="aspect-square w-full rounded-xs overflow-hidden bg-secondary [container-type:inline-size]">
+                  <AlbumCover src={cover} title={a.title} artist={a.artist} className="w-full h-full" />
+                </div>
                 <p className="text-xs font-bold mt-2 truncate">{a.title}</p>
                 <p className="text-[10px] text-muted truncate">{a.artist}</p>
               </Link>
