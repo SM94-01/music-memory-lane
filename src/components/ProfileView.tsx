@@ -177,12 +177,8 @@ export function ProfileView({ profile, fromProfile = false }: { profile: Profile
             {logs.map((l) => {
               const cover = l.cover_url || mockCoverFor(l.album_key);
               return (
-                <Link key={l.id} to="/album/$id" params={{ id: l.album_key }} state={albumLinkState as any} className="aspect-square block bg-background relative">
-                  {cover ? (
-                    <img src={cover} alt={l.title} loading="lazy" className="size-full object-cover" />
-                  ) : (
-                    <div className="size-full grid place-items-center text-xs text-muted font-bold p-1 text-center">{l.title}</div>
-                  )}
+                <Link key={l.id} to="/album/$id" params={{ id: l.album_key }} state={albumLinkState as any} className="aspect-square block bg-background relative [container-type:inline-size]">
+                  <AlbumCover src={cover} title={l.title} artist={l.artist} className="size-full" />
                   {l.rating ? (
                     <span className="absolute bottom-1 left-1 text-[9px] font-mono px-1 py-0.5 bg-background/80 text-accent rounded-xs">★ {l.rating}</span>
                   ) : null}
