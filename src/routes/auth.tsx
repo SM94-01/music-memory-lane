@@ -50,9 +50,8 @@ function AuthPage() {
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col">
       <div className="flex-1 flex flex-col justify-center px-6 max-w-md mx-auto w-full">
-        <div className="mb-10">
-          <Music className="size-8 text-accent mb-3" />
-          <h1 className="text-4xl font-extrabold tracking-tighter">TraX</h1>
+        <div className="mb-10 flex flex-col items-center text-center">
+          <Logo className="h-24 w-auto mb-4" />
           <p className="text-sm text-muted mt-1">Track your music journey.</p>
         </div>
 
