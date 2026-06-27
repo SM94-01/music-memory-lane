@@ -51,7 +51,8 @@ function AuthPage() {
     <div className="min-h-screen bg-background text-foreground flex flex-col">
       <div className="flex-1 flex flex-col justify-center px-6 max-w-md mx-auto w-full">
         <div className="mb-10 flex flex-col items-center text-center">
-          <Logo className="h-32 w-auto" />
+          <Logo className="h-24 w-auto mb-4" />
+          <p className="text-sm text-muted mt-1">Track your music journey.</p>
         </div>
 
         <div className="flex gap-1 p-1 bg-secondary/60 rounded-full mb-6">
