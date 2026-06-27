@@ -7,6 +7,7 @@ import { Avatar } from "@/components/Avatar";
 import { useQuery } from "@tanstack/react-query";
 import { useMyProfile } from "@/lib/auth";
 import { fetchTasteFingerprint } from "@/lib/taste";
+import { AlbumCover } from "@/components/AlbumCover";
 
 export const Route = createFileRoute("/add")({
   head: () => ({ meta: [{ title: "Add music — TraX" }] }),
@@ -156,9 +157,9 @@ function AlbumResults({ items, empty }: { items: ReleaseGroup[]; empty: boolean 
         return (
           <li key={a.id}>
             <Link to="/album/$id" params={{ id: a.id }} className="py-3 flex items-center gap-4">
-              <img src={cover} alt="" loading="lazy" width={56} height={56}
-                onError={(e) => { (e.currentTarget as HTMLImageElement).style.visibility = "hidden"; }}
-                className="size-14 object-cover rounded-xs shrink-0 bg-secondary" />
+              <div className="size-14 shrink-0 rounded-xs overflow-hidden bg-secondary [container-type:inline-size]">
+                <AlbumCover src={cover} title={a.title} artist={artist} className="size-full" />
+              </div>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-bold truncate">{a.title}</p>
                 <p className="text-[11px] text-muted truncate">
@@ -268,9 +269,9 @@ function GenreView({ genre, onBack }: { genre: string; onBack: () => void }) {
               const artist = a["artist-credit"]?.map((c) => c.name).join(", ") ?? "";
               return (
                 <Link to="/album/$id" params={{ id: a.id }} key={a.id}>
-                  <img src={cover} alt="" loading="lazy"
-                    onError={(e) => { (e.currentTarget as HTMLImageElement).style.visibility = "hidden"; }}
-                    className="aspect-square w-full object-cover rounded-xs bg-secondary" />
+                  <div className="aspect-square w-full rounded-xs overflow-hidden bg-secondary [container-type:inline-size]">
+                    <AlbumCover src={cover} title={a.title} artist={artist} className="size-full" />
+                  </div>
                   <p className="text-xs font-bold mt-2 truncate">{a.title}</p>
                   <p className="text-[10px] text-muted truncate">{artist}</p>
                 </Link>

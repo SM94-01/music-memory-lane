@@ -9,6 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMyProfile, useAuth, type Profile } from "@/lib/auth";
 import { mockCoverFor } from "@/data/mock";
+import { AlbumCover } from "@/components/AlbumCover";
 
 type Tab = "posts" | "diary" | "tolisten";
 type Log = {
@@ -176,12 +177,8 @@ export function ProfileView({ profile, fromProfile = false }: { profile: Profile
             {logs.map((l) => {
               const cover = l.cover_url || mockCoverFor(l.album_key);
               return (
-                <Link key={l.id} to="/album/$id" params={{ id: l.album_key }} state={albumLinkState as any} className="aspect-square block bg-background relative">
-                  {cover ? (
-                    <img src={cover} alt={l.title} loading="lazy" className="size-full object-cover" />
-                  ) : (
-                    <div className="size-full grid place-items-center text-xs text-muted font-bold p-1 text-center">{l.title}</div>
-                  )}
+                <Link key={l.id} to="/album/$id" params={{ id: l.album_key }} state={albumLinkState as any} className="aspect-square block bg-background relative [container-type:inline-size]">
+                  <AlbumCover src={cover} title={l.title} artist={l.artist} className="size-full" />
                   {l.rating ? (
                     <span className="absolute bottom-1 left-1 text-[9px] font-mono px-1 py-0.5 bg-background/80 text-accent rounded-xs">★ {l.rating}</span>
                   ) : null}
@@ -267,8 +264,9 @@ function DiaryView({ logs, fromProfile }: { logs: Log[]; fromProfile: boolean })
               const cover = l.cover_url || mockCoverFor(l.album_key);
               return (
                 <Link to="/album/$id" params={{ id: l.album_key }} state={albumLinkState as any} key={l.id} className="flex items-center gap-3">
-                  {cover ? <img src={cover} alt={l.title} loading="lazy" className="size-12 object-cover rounded-xs shrink-0" /> :
-                    <div className="size-12 bg-secondary rounded-xs shrink-0" />}
+                  <div className="size-12 rounded-xs shrink-0 overflow-hidden bg-secondary [container-type:inline-size]">
+                    <AlbumCover src={cover} title={l.title} artist={l.artist} className="size-full" />
+                  </div>
                   <div className="min-w-0 flex-1">
                     <p className="text-sm font-bold truncate">{l.title}</p>
                     <div className="flex items-center gap-2">
@@ -310,8 +308,9 @@ function ToListenView({ items, isMe, fromProfile }: { items: Watch[] | undefined
         return (
           <div key={w.id} className="flex items-center gap-3 border border-border rounded-sm p-2.5">
             <Link to="/album/$id" params={{ id: w.album_key }} state={albumLinkState as any} className="flex items-center gap-3 flex-1 min-w-0">
-              {cover ? <img src={cover} alt={w.title} loading="lazy" className="size-12 object-cover rounded-xs shrink-0" /> :
-                <div className="size-12 bg-secondary rounded-xs shrink-0" />}
+              <div className="size-12 rounded-xs shrink-0 overflow-hidden bg-secondary [container-type:inline-size]">
+                <AlbumCover src={cover} title={w.title} artist={w.artist} className="size-full" />
+              </div>
               <div className="min-w-0 flex-1">
                 <p className="text-sm font-bold truncate">{w.title}</p>
                 <p className="text-[11px] text-muted truncate">{w.artist}{w.year ? ` • ${w.year}` : ""}</p>

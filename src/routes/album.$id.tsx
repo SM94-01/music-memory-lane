@@ -8,6 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useMyProfile } from "@/lib/auth";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { getMockAlbum, mockCoverFor } from "@/data/mock";
+import { AlbumCover } from "@/components/AlbumCover";
 
 type AlbumInfo = { title: string; artist: string; year: number | null; cover: string | null; genre: string | null };
 
@@ -150,11 +151,8 @@ function AlbumPage() {
         </button>
 
         <section>
-          <div className="relative aspect-square mb-6 overflow-hidden rounded-sm bg-secondary">
-            {info.cover ? (
-              <img src={info.cover} alt={info.title} className="w-full h-full object-cover"
-                onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />
-            ) : null}
+          <div className="relative aspect-square mb-6 overflow-hidden rounded-sm bg-secondary [container-type:inline-size]">
+            <AlbumCover src={info.cover} title={info.title} artist={info.artist} className="w-full h-full" />
             <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent pointer-events-none" />
           </div>
 
