@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { X, Loader2, LogOut } from "lucide-react";
+import { X, Loader2, LogOut, Check } from "lucide-react";
 import { useNavigate } from "@tanstack/react-router";
+import { THEMES, useTheme } from "@/lib/theme";
 
 type Prefs = { new_follower: boolean; likes: boolean; comments: boolean };
 
