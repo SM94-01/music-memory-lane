@@ -10,6 +10,7 @@ import { useMyProfile } from "@/lib/auth";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { formatDistanceToNowStrict } from "date-fns";
 import { mockCoverFor } from "@/data/mock";
+import { AlbumCover } from "@/components/AlbumCover";
 
 export const Route = createFileRoute("/")({
   head: () => ({ meta: [{ title: "Explore — TraX" }] }),
