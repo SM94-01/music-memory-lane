@@ -1,7 +1,9 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { X, Loader2, LogOut, Check, Trash2 } from "lucide-react";
-import { useNavigate, useServerFn } from "@tanstack/react-router";
+import { useNavigate } from "@tanstack/react-router";
+import { useServerFn } from "@tanstack/react-start";
+
 import { THEMES, useTheme } from "@/lib/theme";
 import { deleteMyAccount } from "@/lib/account.functions";
 
@@ -32,6 +34,23 @@ export function SettingsSheet({ profileId, onClose }: { profileId: string; onClo
     await supabase.auth.signOut();
     navigate({ to: "/auth", replace: true });
   }
+
+  const deleteAccount = useServerFn(deleteMyAccount);
+  const [deleting, setDeleting] = useState(false);
+  async function handleDelete() {
+    const ok = window.confirm("Cancellare definitivamente il tuo account? Questa azione è irreversibile.");
+    if (!ok) return;
+    setDeleting(true);
+    try {
+      await deleteAccount();
+      await supabase.auth.signOut();
+      navigate({ to: "/auth", replace: true });
+    } catch (e) {
+      setDeleting(false);
+      window.alert("Errore durante la cancellazione: " + (e as Error).message);
+    }
+  }
+
 
   return (
     <div className="fixed inset-0 z-[100] flex items-end" onClick={onClose}>
@@ -77,6 +96,11 @@ export function SettingsSheet({ profileId, onClose }: { profileId: string; onClo
         <button onClick={signOut} className="mt-6 w-full border border-border py-3 rounded-full text-xs font-bold uppercase tracking-widest flex items-center justify-center gap-2 text-muted">
           <LogOut className="size-4" /> Sign out
         </button>
+        <button onClick={handleDelete} disabled={deleting} className="mt-3 w-full border border-destructive/40 text-destructive py-3 rounded-full text-xs font-bold uppercase tracking-widest flex items-center justify-center gap-2 disabled:opacity-50">
+          {deleting ? <Loader2 className="size-4 animate-spin" /> : <Trash2 className="size-4" />}
+          Delete account
+        </button>
+
       </div>
     </div>
   );
