@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { X, Loader2, LogOut, Check } from "lucide-react";
+import { X, Loader2, LogOut, Check, Trash2 } from "lucide-react";
 import { useNavigate } from "@tanstack/react-router";
 import { THEMES, useTheme } from "@/lib/theme";
+import { deleteMyAccount } from "@/lib/account.functions";
 
 type Prefs = { new_follower: boolean; likes: boolean; comments: boolean };
 
@@ -74,6 +75,22 @@ export function SettingsSheet({ profileId, onClose }: { profileId: string; onClo
         </div>
         <button onClick={signOut} className="mt-6 w-full border border-border py-3 rounded-full text-xs font-bold uppercase tracking-widest flex items-center justify-center gap-2 text-muted">
           <LogOut className="size-4" /> Sign out
+        </button>
+        <button
+          onClick={async () => {
+            if (!confirm("Delete your account? This is permanent and removes your profile, logs, lists and reviews.")) return;
+            if (!confirm("Really delete? This cannot be undone.")) return;
+            try {
+              await deleteMyAccount();
+              await supabase.auth.signOut();
+              navigate({ to: "/auth", replace: true });
+            } catch (e: any) {
+              alert("Delete failed: " + (e?.message ?? "unknown"));
+            }
+          }}
+          className="mt-2 w-full py-3 rounded-full text-xs font-bold uppercase tracking-widest flex items-center justify-center gap-2 text-destructive hover:bg-destructive/10"
+        >
+          <Trash2 className="size-4" /> Delete account
         </button>
       </div>
     </div>
