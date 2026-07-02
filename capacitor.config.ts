@@ -14,6 +14,10 @@ const config: CapacitorConfig = {
     // Do not force initial focus on the WebView at startup; let tapped inputs
     // own focus so Android can open the correct keyboard/input connection.
     initialFocus: false,
+    // The Keyboard plugin attaches native IME/window-insets listeners on load.
+    // This app does not need those APIs at runtime, so exclude it from Android
+    // to avoid WebView focus freezes on real devices.
+    includePlugins: ['PushNotifications'],
   },
   plugins: {
     SystemBars: {
