@@ -17,7 +17,18 @@ export default defineConfig({
     tsconfigPaths(),
   ],
   resolve: {
-    alias: { "@": path.resolve(__dirname, "src") },
+    alias: {
+      "@": path.resolve(__dirname, "src"),
+      // Stub server-only Start APIs so the client bundle stays pure.
+      "@tanstack/react-start/server": path.resolve(
+        __dirname,
+        "src/lib/mobile-shims/react-start-server.ts",
+      ),
+      "@tanstack/react-start": path.resolve(
+        __dirname,
+        "src/lib/mobile-shims/react-start.ts",
+      ),
+    },
     dedupe: ["react", "react-dom", "@tanstack/react-router", "@tanstack/react-query"],
   },
   define: {
