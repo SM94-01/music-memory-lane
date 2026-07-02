@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useEffect, useState, type FocusEvent, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { Loader2 } from "lucide-react";
@@ -26,13 +26,6 @@ function AuthPage() {
       navigate({ to: "/", replace: true });
     }
   }, [session?.user, navigate]);
-
-  function keepFocusedInputVisible(e: FocusEvent<HTMLInputElement>) {
-    const input = e.currentTarget;
-    window.setTimeout(() => {
-      input.scrollIntoView({ block: "center", inline: "nearest", behavior: "smooth" });
-    }, 220);
-  }
 
   async function submit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -93,7 +86,6 @@ function AuthPage() {
               autoCorrect="off"
               spellCheck={false}
               enterKeyHint="next"
-              onFocus={keepFocusedInputVisible}
               className="w-full bg-secondary/40 border border-border rounded-full px-4 py-3 outline-none focus:border-accent"
             />
           )}
@@ -109,7 +101,6 @@ function AuthPage() {
             autoCorrect="off"
             spellCheck={false}
             enterKeyHint="next"
-            onFocus={keepFocusedInputVisible}
             className="w-full bg-secondary/40 border border-border rounded-full px-4 py-3 outline-none focus:border-accent"
           />
           <input
@@ -124,7 +115,6 @@ function AuthPage() {
             autoCorrect="off"
             spellCheck={false}
             enterKeyHint="go"
-            onFocus={keepFocusedInputVisible}
             className="w-full bg-secondary/40 border border-border rounded-full px-4 py-3 outline-none focus:border-accent"
           />
           {err && <p className="text-xs text-destructive">{err}</p>}
