@@ -145,6 +145,8 @@
 
   .auth-input {
     min-height: 48px;
+    -webkit-appearance: auto;
+    appearance: auto;
     -webkit-user-select: text;
     user-select: text;
     touch-action: manipulation;
