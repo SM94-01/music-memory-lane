@@ -121,7 +121,7 @@
   }
   ::selection { background: var(--color-accent); color: var(--color-foreground); }
 
-  /* Android WebView input stability: keep native text-entry behavior intact. */
+  /* Keep native text-entry behavior intact on Android WebView. */
   input, textarea, select {
     font-size: 16px;
     line-height: normal;
@@ -131,20 +131,6 @@
     -webkit-appearance: none;
     appearance: none;
     caret-color: var(--color-foreground);
-  }
-  html.capacitor-android {
-    padding-top: var(--safe-area-inset-top, env(safe-area-inset-top, 0px));
-    padding-bottom: var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 0px));
-    padding-left: var(--safe-area-inset-left, env(safe-area-inset-left, 0px));
-    padding-right: var(--safe-area-inset-right, env(safe-area-inset-right, 0px));
-  }
-  html.capacitor-android,
-  html.capacitor-android body,
-  html.capacitor-android #root {
-    height: auto;
-    min-height: 100%;
-    overflow-x: hidden;
-    overflow-y: auto;
   }
 }
 

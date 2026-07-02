@@ -5,10 +5,7 @@ import { createRoot } from "react-dom/client";
 import { RouterProvider } from "@tanstack/react-router";
 
 import { getRouter } from "./router";
-import { installAndroidKeyboardStability } from "./lib/mobile/keyboardStability";
 import "./styles.css";
-
-void installAndroidKeyboardStability();
 
 const router = getRouter();
 
