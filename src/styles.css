@@ -118,39 +118,11 @@
   }
   ::selection { background: var(--color-accent); color: var(--color-foreground); }
 
-  /* Keep native text-entry behavior intact on Android WebView. */
+  /* Prevent iOS/Android zoom on focus without breaking native IME behavior. */
   input, textarea, select {
     font-size: 16px;
-    line-height: normal;
-    touch-action: auto;
-    -webkit-user-select: text;
-    user-select: text;
-    -webkit-appearance: none;
-    appearance: none;
-    caret-color: var(--color-foreground);
   }
 
-  .auth-page {
-    overflow: visible;
-    contain: none;
-    transform: none;
-  }
-
-  .auth-page form,
-  .auth-page input,
-  .auth-page button {
-    transform: none;
-    backface-visibility: visible;
-  }
-
-  .auth-input {
-    min-height: 48px;
-    -webkit-appearance: auto;
-    appearance: auto;
-    -webkit-user-select: text;
-    user-select: text;
-    touch-action: manipulation;
-  }
 }
 
 @keyframes reveal {
