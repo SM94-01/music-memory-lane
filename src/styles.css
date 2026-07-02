@@ -99,6 +99,11 @@
 
 @layer base {
   * { border-color: var(--color-border); }
+  html {
+    min-height: 100%;
+    height: auto;
+    overflow-x: hidden;
+  }
   html, body {
     background-color: var(--color-background);
     color: var(--color-foreground);
@@ -109,20 +114,40 @@
     overscroll-behavior-y: none;
     -webkit-tap-highlight-color: transparent;
   }
+  body, #root {
+    min-height: 100%;
+    margin: 0;
+    overflow-x: hidden;
+  }
+  @supports (min-height: 100svh) {
+    body, #root { min-height: 100svh; }
+  }
   ::selection { background: var(--color-accent); color: var(--color-foreground); }
 
   /* Android WebView input stability:
      - font-size >= 16px prevents auto-zoom, which was locking focus on /auth
-     - touch-action: manipulation kills the 300ms tap delay
+     - touch-action: auto keeps native text selection/caret behavior intact
      - user-select: text ensures the caret can enter inputs
      - -webkit-appearance: none avoids the native picker overlay stealing focus */
   input, textarea, select {
     font-size: 16px;
-    touch-action: manipulation;
+    line-height: normal;
+    touch-action: auto;
     -webkit-user-select: text;
     user-select: text;
     -webkit-appearance: none;
     appearance: none;
+    caret-color: var(--color-foreground);
+  }
+  html.capacitor-android.keyboard-open,
+  html.capacitor-android.keyboard-open body {
+    height: auto;
+    overflow-y: auto;
+  }
+  html.capacitor-android input,
+  html.capacitor-android textarea,
+  html.capacitor-android select {
+    transform: translateZ(0);
   }
 }
 

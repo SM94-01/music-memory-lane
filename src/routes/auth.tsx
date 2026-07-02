@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useState, type FocusEvent, type FormEvent } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { Loader2 } from "lucide-react";
@@ -27,7 +27,14 @@ function AuthPage() {
     }
   }, [session?.user, navigate]);
 
-  async function submit(e: React.FormEvent) {
+  function keepFocusedInputVisible(e: FocusEvent<HTMLInputElement>) {
+    const input = e.currentTarget;
+    window.setTimeout(() => {
+      input.scrollIntoView({ block: "center", inline: "nearest", behavior: "smooth" });
+    }, 220);
+  }
+
+  async function submit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setBusy(true);
     setErr(null);
@@ -51,11 +58,9 @@ function AuthPage() {
   }
 
   return (
-    // Top-aligned layout with padding rather than `flex-1 justify-center`:
-    // vertical centering fights the Android keyboard resize and can trap
-    // focus on the first tap. Padding keeps the content in place regardless
-    // of viewport height changes.
-    <div className="min-h-[100dvh] bg-background text-foreground px-6 pt-12 pb-8">
+    // Stable small-viewport height avoids Android WebView relayout loops while
+    // the keyboard opens; the page can still scroll to the focused field.
+    <div className="min-h-[100svh] overflow-y-auto bg-background text-foreground px-6 pt-12 pb-8">
       <div className="max-w-md mx-auto w-full">
         <div className="mb-10 flex flex-col items-center text-center">
           <Logo className="h-40 w-auto mb-4" />
@@ -88,6 +93,7 @@ function AuthPage() {
               autoCorrect="off"
               spellCheck={false}
               enterKeyHint="next"
+              onFocus={keepFocusedInputVisible}
               className="w-full bg-secondary/40 border border-border rounded-full px-4 py-3 outline-none focus:border-accent"
             />
           )}
@@ -103,6 +109,7 @@ function AuthPage() {
             autoCorrect="off"
             spellCheck={false}
             enterKeyHint="next"
+            onFocus={keepFocusedInputVisible}
             className="w-full bg-secondary/40 border border-border rounded-full px-4 py-3 outline-none focus:border-accent"
           />
           <input
@@ -117,6 +124,7 @@ function AuthPage() {
             autoCorrect="off"
             spellCheck={false}
             enterKeyHint="go"
+            onFocus={keepFocusedInputVisible}
             className="w-full bg-secondary/40 border border-border rounded-full px-4 py-3 outline-none focus:border-accent"
           />
           {err && <p className="text-xs text-destructive">{err}</p>}

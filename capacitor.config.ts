@@ -1,5 +1,4 @@
 import type { CapacitorConfig } from '@capacitor/cli';
-import { KeyboardResize } from '@capacitor/keyboard';
 
 const config: CapacitorConfig = {
   appId: 'com.TraX.app',
@@ -16,12 +15,11 @@ const config: CapacitorConfig = {
       presentationOptions: ['badge', 'sound', 'alert'],
     },
     Keyboard: {
-      // `Body` resizes the <body> element on keyboard open — the most stable
-      // mode on Android WebView for form-heavy screens. `Native` is known to
-      // cause input focus freezes on some Android versions (see Capacitor
-      // issue tracker), which is what we were hitting on /auth.
-      resize: KeyboardResize.Body,
-      resizeOnFullScreen: true,
+      // Android uses windowSoftInputMode="adjustResize" in AndroidManifest.
+      // Do not enable the fullscreen workaround here: this app is not running
+      // with an overlaying status bar, and the workaround can create a resize
+      // loop in Android WebView when an input receives focus.
+      resizeOnFullScreen: false,
     },
   },
 };
