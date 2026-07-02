@@ -19,8 +19,12 @@ const config: CapacitorConfig = {
   },
   plugins: {
     SystemBars: {
-      // Avoid CSS/insets padding races while Android opens the soft keyboard.
-      insetsHandling: 'native',
+      // Critical for Android WebView text inputs: disable Capacitor's SystemBars
+      // inset listener entirely. Capacitor 8 only accepts "css" or "disable";
+      // the previous "native" value was invalid and silently fell back to
+      // "css", which recalculated padding/JS safe-area variables every time
+      // the IME opened and could freeze the WebView.
+      insetsHandling: 'disable',
       style: 'DARK',
       hidden: false,
     },
