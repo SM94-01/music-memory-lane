@@ -50,6 +50,17 @@ function AuthPage() {
     }
   }
 
+  function logInputEvent(field: "email" | "password" | "name", event: "focus" | "change", target: HTMLInputElement) {
+    console.info("[TraXAuthInput]", {
+      event,
+      field,
+      valueLength: target.value.length,
+      activeTag: document.activeElement?.tagName ?? null,
+      activeName: document.activeElement instanceof HTMLInputElement ? document.activeElement.name : null,
+      timestamp: new Date().toISOString(),
+    });
+  }
+
   const inputClass = "auth-input w-full bg-secondary/40 border border-border rounded-full px-4 py-3 outline-none focus:border-accent";
 
   return (
@@ -89,6 +100,8 @@ function AuthPage() {
               autoCorrect="off"
               spellCheck={false}
               enterKeyHint="next"
+              onFocus={(e) => logInputEvent("name", "focus", e.currentTarget)}
+              onChange={(e) => logInputEvent("name", "change", e.currentTarget)}
               className={inputClass}
             />
           )}
@@ -103,6 +116,8 @@ function AuthPage() {
             autoCorrect="off"
             spellCheck={false}
             enterKeyHint="next"
+            onFocus={(e) => logInputEvent("email", "focus", e.currentTarget)}
+            onChange={(e) => logInputEvent("email", "change", e.currentTarget)}
             className={inputClass}
           />
           <input
@@ -116,6 +131,8 @@ function AuthPage() {
             autoCorrect="off"
             spellCheck={false}
             enterKeyHint="go"
+            onFocus={(e) => logInputEvent("password", "focus", e.currentTarget)}
+            onChange={(e) => logInputEvent("password", "change", e.currentTarget)}
             className={inputClass}
           />
           {err && <p className="text-xs text-destructive">{err}</p>}
