@@ -144,10 +144,8 @@
     height: auto;
     overflow-y: auto;
   }
-  html.capacitor-android input,
-  html.capacitor-android textarea,
-  html.capacitor-android select {
-    transform: translateZ(0);
+  html.capacitor-android.keyboard-open body {
+    padding-bottom: max(var(--keyboard-inset, 0px), env(safe-area-inset-bottom));
   }
 }
 

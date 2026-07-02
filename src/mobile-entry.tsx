@@ -8,7 +8,7 @@ import { getRouter } from "./router";
 import { installAndroidKeyboardStability } from "./lib/mobile/keyboardStability";
 import "./styles.css";
 
-installAndroidKeyboardStability();
+void installAndroidKeyboardStability();
 
 const router = getRouter();
 

@@ -1,6 +1,8 @@
 import { Capacitor } from "@capacitor/core";
+import { Keyboard } from "@capacitor/keyboard";
 
 let installed = false;
+let keyboardInset = 0;
 
 const EDITABLE_SELECTOR = "input, textarea, select, [contenteditable='true']";
 
@@ -12,41 +14,39 @@ function keepInputVisible(target: EventTarget | Element | null) {
   if (!isEditableElement(target)) return;
 
   window.setTimeout(() => {
-    target.scrollIntoView({ block: "center", inline: "nearest", behavior: "smooth" });
-  }, 180);
-
-  window.setTimeout(() => {
-    target.scrollIntoView({ block: "center", inline: "nearest", behavior: "auto" });
-  }, 520);
+    target.scrollIntoView({ block: "nearest", inline: "nearest", behavior: "auto" });
+  }, 120);
 }
 
 function setKeyboardOpen(open: boolean) {
   document.documentElement.classList.toggle("keyboard-open", open);
   document.body?.classList.toggle("keyboard-open", open);
+  document.documentElement.style.setProperty("--keyboard-inset", open ? `${keyboardInset}px` : "0px");
 }
 
 /**
- * Android WebView can get stuck when the soft keyboard opens during a dynamic
- * viewport resize. This native-only guard keeps focus on the tapped field and
- * scrolls it into a stable position without changing the visual UI.
+ * Android WebView can lock up when JavaScript repeatedly reacts to viewport
+ * resize/scroll events while the IME opens. Keep this intentionally small:
+ * native adjustPan owns the keyboard movement, while we only add a safe inset
+ * and perform one non-animated scroll after focus.
  */
-export function installAndroidKeyboardStability() {
+export async function installAndroidKeyboardStability() {
   if (installed || typeof window === "undefined" || typeof document === "undefined") return;
   if (!Capacitor.isNativePlatform() || Capacitor.getPlatform() !== "android") return;
 
   installed = true;
   document.documentElement.classList.add("capacitor-android");
 
-  window.addEventListener(
-    "pointerup",
-    (event) => {
-      if (!isEditableElement(event.target)) return;
-      event.target.focus({ preventScroll: true });
-      setKeyboardOpen(true);
-      keepInputVisible(event.target);
-    },
-    { passive: true, capture: true },
-  );
+  await Keyboard.addListener("keyboardWillShow", (info) => {
+    keyboardInset = info.keyboardHeight || 0;
+    setKeyboardOpen(true);
+    keepInputVisible(document.activeElement);
+  });
+
+  await Keyboard.addListener("keyboardWillHide", () => {
+    keyboardInset = 0;
+    setKeyboardOpen(false);
+  });
 
   window.addEventListener(
     "focusin",
@@ -67,16 +67,4 @@ export function installAndroidKeyboardStability() {
     },
     true,
   );
-
-  const onViewportChange = () => {
-    const activeElement = document.activeElement;
-    if (isEditableElement(activeElement)) {
-      setKeyboardOpen(true);
-      keepInputVisible(activeElement);
-    }
-  };
-
-  window.visualViewport?.addEventListener("resize", onViewportChange, { passive: true });
-  window.visualViewport?.addEventListener("scroll", onViewportChange, { passive: true });
-  window.addEventListener("resize", onViewportChange, { passive: true });
 }

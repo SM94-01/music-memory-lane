@@ -15,10 +15,9 @@ const config: CapacitorConfig = {
       presentationOptions: ['badge', 'sound', 'alert'],
     },
     Keyboard: {
-      // Android uses windowSoftInputMode="adjustResize" in AndroidManifest.
-      // Do not enable the fullscreen workaround here: this app is not running
-      // with an overlaying status bar, and the workaround can create a resize
-      // loop in Android WebView when an input receives focus.
+      // Android is handled natively with windowSoftInputMode="adjustPan".
+      // Avoid the fullscreen resize workaround: it can create focus/resize
+      // loops in Android WebView when auth inputs receive focus.
       resizeOnFullScreen: false,
     },
   },
