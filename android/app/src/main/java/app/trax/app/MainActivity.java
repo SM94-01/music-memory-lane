@@ -35,7 +35,8 @@ public class MainActivity extends BridgeActivity {
         WebView webView = getBridge() != null ? getBridge().getWebView() : null;
         if (webView == null) return;
 
-        if (webView.getParent() instanceof View parent) {
+        if (webView.getParent() instanceof View) {
+            View parent = (View) webView.getParent();
             ViewCompat.setOnApplyWindowInsetsListener(parent, null);
             parent.setPadding(0, 0, 0, 0);
         }
