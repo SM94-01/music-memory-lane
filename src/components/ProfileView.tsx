@@ -12,6 +12,7 @@ import { mockCoverFor } from "@/data/mock";
 import { AlbumCover } from "@/components/AlbumCover";
 import { IDENTITIES, computeTasteStats } from "@/lib/identities";
 import { toast } from "sonner";
+import { notificationService } from "@/lib/notifications";
 
 type Tab = "posts" | "diary" | "tolisten";
 type Log = {
@@ -243,6 +244,12 @@ function FollowButton({ targetId }: { targetId: string }) {
     } else {
       setFollowing(true);
       await supabase.from("follows").insert({ follower_id: me.id, following_id: targetId });
+      void notificationService.notify({
+        type: "follow",
+        actorId: me.id,
+        recipientId: targetId,
+        actorName: me.name ?? me.handle,
+      });
     }
     qc.invalidateQueries();
   }

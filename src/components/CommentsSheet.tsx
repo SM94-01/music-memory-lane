@@ -5,6 +5,7 @@ import { Avatar } from "@/components/Avatar";
 import { useQueryClient } from "@tanstack/react-query";
 import { X, Send, Loader2 } from "lucide-react";
 import { Link } from "@tanstack/react-router";
+import { notificationService } from "@/lib/notifications";
 
 type Comment = {
   id: string;
@@ -37,6 +38,15 @@ export function CommentsSheet({ logId, onClose, onCountChange }: { logId: string
     if (!text.trim() || !me) return;
     setSending(true);
     const { error } = await supabase.from("comments").insert({ log_id: logId, user_id: me.id, body: text.trim() });
+    if (!error) {
+      void notificationService.notify({
+        type: "comment",
+        actorId: me.id,
+        logId,
+        actorName: me.name ?? me.handle,
+        preview: text.trim(),
+      });
+    }
     setSending(false);
     if (!error) {
       setText("");
