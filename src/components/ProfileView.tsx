@@ -10,6 +10,8 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMyProfile, useAuth, type Profile } from "@/lib/auth";
 import { mockCoverFor } from "@/data/mock";
 import { AlbumCover } from "@/components/AlbumCover";
+import { IDENTITIES, computeTasteStats } from "@/lib/identities";
+import { toast } from "sonner";
 
 type Tab = "posts" | "diary" | "tolisten";
 type Log = {
@@ -98,6 +100,29 @@ export function ProfileView({ profile, fromProfile = false }: { profile: Profile
       setUploadingAvatar(false);
     }
   }
+
+  // Detect newly unlocked identities and toast
+  useEffect(() => {
+    if (!isMe || !logs || !watchlist) return;
+    const stats = computeTasteStats({ logs: logs as any, watchlistCount: watchlist.length });
+    const unlocked = IDENTITIES.filter((i) => i.unlocked(stats)).map((i) => i.key);
+    const storageKey = `trax:unlocked:${profile.id}`;
+    let previous: string[] = [];
+    try { previous = JSON.parse(localStorage.getItem(storageKey) || "[]"); } catch {}
+    if (previous.length === 0 && unlocked.length > 0) {
+      // First run — seed silently to avoid a wave of toasts
+      localStorage.setItem(storageKey, JSON.stringify(unlocked));
+      return;
+    }
+    const fresh = unlocked.filter((k) => !previous.includes(k));
+    if (fresh.length > 0) {
+      fresh.forEach((k) => {
+        const it = IDENTITIES.find((i) => i.key === k)!;
+        toast(`${it.emoji} Identity unlocked: ${it.label}`, { description: it.description });
+      });
+      localStorage.setItem(storageKey, JSON.stringify(unlocked));
+    }
+  }, [isMe, logs, watchlist, profile.id]);
 
   const albumLinkState = fromProfile ? { from: "profile" as const } : undefined;
 
