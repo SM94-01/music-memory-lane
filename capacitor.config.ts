@@ -17,7 +17,7 @@ const config: CapacitorConfig = {
     // The Keyboard plugin attaches native IME/window-insets listeners on load.
     // This app does not need those APIs at runtime, so exclude it from Android
     // to avoid WebView focus freezes on real devices.
-    includePlugins: ['PushNotifications'],
+    includePlugins: ['@capacitor/app', '@capacitor/push-notifications'],
   },
   plugins: {
     SystemBars: {
