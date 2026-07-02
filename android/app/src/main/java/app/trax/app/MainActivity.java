@@ -2,7 +2,6 @@ package com.TraX.app;
 
 import android.os.Bundle;
 import android.util.Log;
-import android.view.WindowManager;
 import android.webkit.WebView;
 import com.getcapacitor.BridgeActivity;
 
@@ -12,21 +11,17 @@ public class MainActivity extends BridgeActivity {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        // Baseline Android IME setup for Capacitor WebView.
-        // Keep the window able to receive the soft keyboard and avoid resizing
-        // the WebView while IME opens, which has caused focus deadlocks on real
-        // devices with this app.
-        getWindow().clearFlags(WindowManager.LayoutParams.FLAG_ALT_FOCUSABLE_IM);
-        getWindow().setSoftInputMode(
-            WindowManager.LayoutParams.SOFT_INPUT_STATE_UNSPECIFIED |
-            WindowManager.LayoutParams.SOFT_INPUT_ADJUST_PAN
-        );
+        Log.i(TAG, "Android IME manifest baseline active: adjustPan, captureInput=false, initialFocus=true");
+    }
 
+    @Override
+    public void onStart() {
+        super.onStart();
         WebView webView = getBridge() != null ? getBridge().getWebView() : null;
         if (webView == null) return;
         webView.setFocusable(true);
         webView.setFocusableInTouchMode(true);
         webView.requestFocusFromTouch();
-        Log.i(TAG, "Android IME baseline active: adjustPan, captureInput=false, initialFocus=true, webViewFocused=" + webView.hasFocus());
+        Log.i(TAG, "WebView focus ready: webViewFocused=" + webView.hasFocus());
     }
 }

@@ -19,7 +19,8 @@ const config: CapacitorConfig = {
   },
   plugins: {
     SystemBars: {
-      insetsHandling: 'css',
+      // Avoid CSS/insets padding races while Android opens the soft keyboard.
+      insetsHandling: 'native',
       style: 'DARK',
       hidden: false,
     },
