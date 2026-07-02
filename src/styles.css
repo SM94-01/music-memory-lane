@@ -109,9 +109,6 @@
     color: var(--color-foreground);
     font-family: var(--font-display);
     -webkit-font-smoothing: antialiased;
-    /* Prevent Android WebView from locking touches during pull-to-refresh
-       or when the keyboard resizes the viewport. */
-    overscroll-behavior-y: none;
     -webkit-tap-highlight-color: transparent;
   }
   body, #root {
@@ -124,11 +121,7 @@
   }
   ::selection { background: var(--color-accent); color: var(--color-foreground); }
 
-  /* Android WebView input stability:
-     - font-size >= 16px prevents auto-zoom, which was locking focus on /auth
-     - touch-action: auto keeps native text selection/caret behavior intact
-     - user-select: text ensures the caret can enter inputs
-     - -webkit-appearance: none avoids the native picker overlay stealing focus */
+  /* Android WebView input stability: keep native text-entry behavior intact. */
   input, textarea, select {
     font-size: 16px;
     line-height: normal;
@@ -139,13 +132,19 @@
     appearance: none;
     caret-color: var(--color-foreground);
   }
-  html.capacitor-android.keyboard-open,
-  html.capacitor-android.keyboard-open body {
-    height: auto;
-    overflow-y: auto;
+  html.capacitor-android {
+    padding-top: var(--safe-area-inset-top, env(safe-area-inset-top, 0px));
+    padding-bottom: var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 0px));
+    padding-left: var(--safe-area-inset-left, env(safe-area-inset-left, 0px));
+    padding-right: var(--safe-area-inset-right, env(safe-area-inset-right, 0px));
   }
-  html.capacitor-android.keyboard-open body {
-    padding-bottom: max(var(--keyboard-inset, 0px), env(safe-area-inset-bottom));
+  html.capacitor-android,
+  html.capacitor-android body,
+  html.capacitor-android #root {
+    height: auto;
+    min-height: 100%;
+    overflow-x: hidden;
+    overflow-y: auto;
   }
 }
 
