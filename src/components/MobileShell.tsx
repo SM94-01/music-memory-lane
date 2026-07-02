@@ -3,11 +3,13 @@ import { useEffect, type ReactNode } from "react";
 import { Compass, Plus, User } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { Logo } from "@/components/Logo";
+import { usePushNotifications } from "@/lib/push/usePushNotifications";
 
 export function MobileShell({ children, hideNav = false }: { children: ReactNode; hideNav?: boolean }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const { session, loading } = useAuth();
   const navigate = useNavigate();
+  usePushNotifications();
 
   useEffect(() => {
     if (!loading && !session) navigate({ to: "/auth", replace: true });
