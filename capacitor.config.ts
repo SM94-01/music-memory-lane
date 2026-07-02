@@ -7,10 +7,11 @@ const config: CapacitorConfig = {
   android: {
     allowMixedContent: false,
     androidScheme: 'https',
+    imeMode: 'adjustResize', // Gestisce meglio il ridimensionamento IME
   },
   plugins: {
     SystemBars: {
-      insetsHandling: 'disable',
+      insetsHandling: 'manage', // Gestione migliorata degli insets (tastiera)
     },
     PushNotifications: {
       presentationOptions: ['badge', 'sound', 'alert'],
