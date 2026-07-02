@@ -16,8 +16,6 @@ const config: CapacitorConfig = {
     // startup when initialFocus is true; without it, Android WebView can focus
     // DOM inputs without opening the soft keyboard and then stop responding.
     initialFocus: true,
-    // Keep the native plugin set explicit for mobile builds.
-    includePlugins: ['@capacitor/app', '@capacitor/push-notifications'],
   },
   plugins: {
     SystemBars: {
