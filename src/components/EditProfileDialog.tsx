@@ -28,10 +28,7 @@ export function EditProfileDialog({ profile, onClose }: { profile: Profile; onCl
     })();
   }, [profile.id]);
 
-  const items = useMemo(() => IDENTITIES.map((i) => ({
-    ...i,
-    isUnlocked: stats ? i.unlocked(stats) : i.key === "new-listener",
-  })), [stats]);
+  const items = useMemo(() => IDENTITIES.filter((i) => stats ? i.unlocked(stats) : i.key === "new-listener"), [stats]);
 
   async function save() {
     setBusy(true); setErr(null);
