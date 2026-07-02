@@ -1,1 +1,6 @@
 project_id = "udpdgwoenmrqpehnfxhc"
+
+# Require a valid Supabase JWT to call this function so unauthenticated
+# clients can't spam notifications to arbitrary user_ids.
+[functions.send-push-notification]
+verify_jwt = true

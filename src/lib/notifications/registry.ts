@@ -47,8 +47,10 @@ export const eventRegistry: Registry = {
         : `${e.actorName ?? "Someone"} commented on your log`,
       data: { type: "comment", actor_id: e.actorId, log_id: e.logId },
     }),
-    // Comments can legitimately repeat from the same actor on the same log,
-    // so include a coarse time bucket (10s window) to only suppress accidental doubles.
-    dedupKey: (e) => `comment:${e.actorId}:${e.logId}:${Math.floor(Date.now() / 10_000)}`,
+    // Comments can legitimately repeat from the same actor on the same log
+    // (a real conversation). Only suppress accidental double-submits within
+    // a very short 2s window; distinct payloads produce distinct keys.
+    dedupKey: (e) =>
+      `comment:${e.actorId}:${e.logId}:${Math.floor(Date.now() / 2_000)}:${(e.preview ?? "").slice(0, 40)}`,
   },
 };
