@@ -11,8 +11,9 @@ export function usePushNotifications() {
 
   useEffect(() => {
     if (!isNativePlatform()) return;
+    if (!session?.user.id) return;
     void initPushNotifications();
-  }, []);
+  }, [session?.user.id]);
 
   useEffect(() => {
     if (!isNativePlatform()) return;
