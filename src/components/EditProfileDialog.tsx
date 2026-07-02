@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 import type { Profile } from "@/lib/auth";
-import { X, Loader2, Lock } from "lucide-react";
+import { X, Loader2 } from "lucide-react";
 import { IDENTITIES, computeTasteStats, identityByKey } from "@/lib/identities";
 
 export function EditProfileDialog({ profile, onClose }: { profile: Profile; onClose: () => void }) {
