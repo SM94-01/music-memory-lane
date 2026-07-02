@@ -34,7 +34,7 @@ export function SettingsSheet({ profileId, onClose }: { profileId: string; onClo
 
   return (
     <div className="fixed inset-0 z-[100] flex items-end" onClick={onClose}>
-      <div className="absolute inset-0 bg-background/70 backdrop-blur-sm" />
+      <div className="absolute inset-0 bg-background/80" />
       <div className="relative w-full max-w-md mx-auto bg-background border-t border-border rounded-t-2xl p-5 pb-10 animate-in slide-in-from-bottom duration-200" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between mb-5">
           <h2 className="font-extrabold tracking-tight text-lg">Notifications</h2>

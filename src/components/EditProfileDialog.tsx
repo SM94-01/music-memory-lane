@@ -47,7 +47,8 @@ export function EditProfileDialog({ profile, onClose }: { profile: Profile; onCl
   }
 
   return (
-    <div className="fixed inset-0 z-[100] bg-background/95 backdrop-blur-sm overflow-y-auto">
+    <div className="fixed inset-0 z-[100] bg-background">
+      <div className="h-full overflow-y-auto">
       <div className="max-w-md mx-auto px-5 py-6">
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-xl font-extrabold tracking-tight">Edit profile</h2>
@@ -91,6 +92,7 @@ export function EditProfileDialog({ profile, onClose }: { profile: Profile; onCl
             {busy && <Loader2 className="size-4 animate-spin" />} Save changes
           </button>
         </div>
+      </div>
       </div>
     </div>
   );

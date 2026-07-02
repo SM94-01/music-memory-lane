@@ -23,7 +23,7 @@ export function MobileShell({ children, hideNav = false }: { children: ReactNode
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <nav className="sticky top-0 z-40 bg-background/80 backdrop-blur-md border-b border-border px-5 py-3 flex items-center justify-between">
+      <nav className="sticky top-0 z-40 bg-background border-b border-border px-5 py-3 flex items-center justify-between">
         <Link to="/" aria-label="TraX home" className="flex items-center"><Logo className="h-12 w-auto" /></Link>
         <span className="text-[10px] font-mono uppercase tracking-widest text-muted">Track your music journey</span>
       </nav>
@@ -32,7 +32,7 @@ export function MobileShell({ children, hideNav = false }: { children: ReactNode
 
       {!hideNav && (
         <div className="fixed bottom-5 left-1/2 -translate-x-1/2 w-[calc(100%-1.5rem)] max-w-sm z-50">
-          <div className="bg-foreground/95 backdrop-blur-md text-background px-3 py-2 flex justify-between items-center rounded-full shadow-2xl ring-4 ring-background/80">
+          <div className="bg-foreground text-background px-3 py-2 flex justify-between items-center rounded-full shadow-2xl ring-4 ring-background/80">
             <NavItem to="/" active={isActive("/") && !isActive("/profile") && !isActive("/add")} label="Explore">
               <Compass className="size-5" strokeWidth={2.2} />
             </NavItem>
