@@ -62,7 +62,7 @@ export function EditProfileDialog({ profile, onClose }: { profile: Profile; onCl
 
           <div>
             <span className="text-[9px] font-mono uppercase tracking-widest text-muted mb-1.5 block">
-              Identity {stats && <span className="text-accent ml-1">— {items.filter((i) => i.isUnlocked).length}/{items.length} unlocked</span>}
+              Identity {stats && <span className="text-accent ml-1">— {items.length}/{IDENTITIES.length} unlocked</span>}
             </span>
             <div className="relative">
               <select
@@ -71,15 +71,14 @@ export function EditProfileDialog({ profile, onClose }: { profile: Profile; onCl
                 className={`${inp} appearance-none pr-8`}
               >
                 {items.map((i) => (
-                  <option key={i.key} value={i.key} disabled={!i.isUnlocked}>
-                    {i.emoji} {i.label}{!i.isUnlocked ? " (locked)" : ""} — {i.description}
+                  <option key={i.key} value={i.key}>
+                    {i.emoji} {i.label} — {i.description}
                   </option>
                 ))}
               </select>
-              <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-muted">
-                {items.find((i) => i.key === identity)?.isUnlocked ? "▾" : <Lock className="size-3.5" />}
-              </span>
+              <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-muted">▾</span>
             </div>
+            <p className="mt-1.5 text-[10px] text-muted">Unlock more identities by logging albums, writing reviews, and building your list.</p>
           </div>
 
 
