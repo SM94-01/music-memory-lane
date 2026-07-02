@@ -5,10 +5,10 @@ import { createRoot } from "react-dom/client";
 import { RouterProvider } from "@tanstack/react-router";
 
 import { getRouter } from "./router";
-import { installAndroidKeyboardStability } from "./lib/mobile/keyboardStability";
+import { installMobileInputDiagnostics } from "./lib/mobileInputDiagnostics";
 import "./styles.css";
 
-void installAndroidKeyboardStability();
+installMobileInputDiagnostics();
 
 const router = getRouter();
 

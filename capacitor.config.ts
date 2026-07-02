@@ -9,19 +9,18 @@ const config: CapacitorConfig = {
     allowMixedContent: false,
     androidScheme: 'https',
     // Keep Android's normal WebView input connection. The alternative
-    // captureInput path is known to break/lock IME text entry on real devices.
+    // captureInput path replaces WebView's IME connection and can break text
+    // entry on real devices.
     captureInput: false,
-    // Do not force initial focus on the WebView at startup; let tapped inputs
-    // own focus so Android can open the correct keyboard/input connection.
-    initialFocus: false,
-    // The Keyboard plugin attaches native IME/window-insets listeners on load.
-    // This app does not need those APIs at runtime, so exclude it from Android
-    // to avoid WebView focus freezes on real devices.
-    includePlugins: ['@capacitor/app', '@capacitor/push-notifications'],
+    // IMPORTANT: keep this enabled. Capacitor calls requestFocusFromTouch() on
+    // startup when initialFocus is true; without it, Android WebView can focus
+    // DOM inputs without opening the soft keyboard and then stop responding.
+    initialFocus: true,
   },
   plugins: {
     SystemBars: {
-      insetsHandling: 'css',
+      // Avoid CSS/insets padding races while Android opens the soft keyboard.
+      insetsHandling: 'native',
       style: 'DARK',
       hidden: false,
     },
