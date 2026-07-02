@@ -116,9 +116,6 @@
     margin: 0;
     overflow-x: hidden;
   }
-  @supports (min-height: 100svh) {
-    body, #root { min-height: 100svh; }
-  }
   ::selection { background: var(--color-accent); color: var(--color-foreground); }
 
   /* Keep native text-entry behavior intact on Android WebView. */
