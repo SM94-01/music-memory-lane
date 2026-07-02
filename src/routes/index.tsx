@@ -11,6 +11,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { formatDistanceToNowStrict } from "date-fns";
 import { mockCoverFor } from "@/data/mock";
 import { AlbumCover } from "@/components/AlbumCover";
+import { notificationService } from "@/lib/notifications";
 
 export const Route = createFileRoute("/")({
   head: () => ({ meta: [{ title: "Explore — TraX" }] }),
@@ -123,6 +124,13 @@ function FeedCard({ item }: { item: LogRow }) {
     } else {
       setLiked(true); setLikeCount((c) => c + 1);
       await supabase.from("likes").insert({ log_id: item.id, user_id: me.id });
+      void notificationService.notify({
+        type: "like",
+        actorId: me.id,
+        logId: item.id,
+        actorName: me.name ?? me.handle,
+        albumTitle: item.title,
+      });
     }
     qc.invalidateQueries({ queryKey: ["feed"] });
   }
@@ -264,6 +272,12 @@ function SuggestedUser({ user, score }: { user: { id: string; handle: string; na
     if (!me || busy) return;
     setBusy(true);
     await supabase.from("follows").insert({ follower_id: me.id, following_id: user.id });
+    void notificationService.notify({
+      type: "follow",
+      actorId: me.id,
+      recipientId: user.id,
+      actorName: me.name ?? me.handle,
+    });
     qc.invalidateQueries({ queryKey: ["suggestedUsers"] });
     qc.invalidateQueries({ queryKey: ["feed"] });
   }
