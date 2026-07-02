@@ -26,7 +26,6 @@ public class MainActivity extends BridgeActivity {
         if (webView == null) return;
         webView.setFocusable(true);
         webView.setFocusableInTouchMode(true);
-        webView.requestFocusFromTouch();
         disableInsetsMutation();
         Log.i(TAG, "WebView focus ready: webViewFocused=" + webView.hasFocus());
     }
