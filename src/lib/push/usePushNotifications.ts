@@ -11,8 +11,14 @@ export function usePushNotifications() {
 
   useEffect(() => {
     if (!isNativePlatform()) return;
-    void initPushNotifications();
-  }, []);
+    if (!session?.user.id) return;
+    const timer = window.setTimeout(() => {
+      const active = document.activeElement;
+      const isTyping = active instanceof HTMLInputElement || active instanceof HTMLTextAreaElement;
+      if (!isTyping) void initPushNotifications();
+    }, 2500);
+    return () => window.clearTimeout(timer);
+  }, [session?.user.id]);
 
   useEffect(() => {
     if (!isNativePlatform()) return;
