@@ -14,9 +14,9 @@ public class MainActivity extends BridgeActivity {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_UNSPECIFIED | WindowManager.LayoutParams.SOFT_INPUT_ADJUST_NOTHING);
+        getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_UNSPECIFIED | WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);
         disableInsetsMutation();
-        Log.i(TAG, "Android IME safe mode active: adjustNothing, SystemBars insets disabled, captureInput=false, initialFocus=true");
+        Log.i(TAG, "Android IME safe mode active: adjustResize, SystemBars insets disabled, captureInput=false, initialFocus=true");
     }
 
     @Override
