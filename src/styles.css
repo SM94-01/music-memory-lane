@@ -104,8 +104,26 @@
     color: var(--color-foreground);
     font-family: var(--font-display);
     -webkit-font-smoothing: antialiased;
+    /* Prevent Android WebView from locking touches during pull-to-refresh
+       or when the keyboard resizes the viewport. */
+    overscroll-behavior-y: none;
+    -webkit-tap-highlight-color: transparent;
   }
   ::selection { background: var(--color-accent); color: var(--color-foreground); }
+
+  /* Android WebView input stability:
+     - font-size >= 16px prevents auto-zoom, which was locking focus on /auth
+     - touch-action: manipulation kills the 300ms tap delay
+     - user-select: text ensures the caret can enter inputs
+     - -webkit-appearance: none avoids the native picker overlay stealing focus */
+  input, textarea, select {
+    font-size: 16px;
+    touch-action: manipulation;
+    -webkit-user-select: text;
+    user-select: text;
+    -webkit-appearance: none;
+    appearance: none;
+  }
 }
 
 @keyframes reveal {

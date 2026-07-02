@@ -1,4 +1,5 @@
 import type { CapacitorConfig } from '@capacitor/cli';
+import { KeyboardResize } from '@capacitor/keyboard';
 
 const config: CapacitorConfig = {
   appId: 'com.TraX.app',
@@ -7,8 +8,7 @@ const config: CapacitorConfig = {
   android: {
     // Required so Google Play accepts release APKs; also prevents cleartext HTTP.
     allowMixedContent: false,
-    androidScheme: "https",
-    // Debuggable is auto-toggled by Gradle; leaving unset is intentional.
+    androidScheme: 'https',
   },
   plugins: {
     PushNotifications: {
@@ -16,7 +16,12 @@ const config: CapacitorConfig = {
       presentationOptions: ['badge', 'sound', 'alert'],
     },
     Keyboard: {
-      resize: "native",
+      // `Body` resizes the <body> element on keyboard open — the most stable
+      // mode on Android WebView for form-heavy screens. `Native` is known to
+      // cause input focus freezes on some Android versions (see Capacitor
+      // issue tracker), which is what we were hitting on /auth.
+      resize: KeyboardResize.Body,
+      resizeOnFullScreen: true,
     },
   },
 };

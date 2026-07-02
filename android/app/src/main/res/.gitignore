@@ -1,0 +1,8 @@
+# macOS / iCloud / Finder duplicate files break the Android resource
+# compiler with:
+#   "File-based resource names must contain only lowercase a-z, 0-9,
+#    or underscore"
+# Ignore any filename containing a space (e.g. "ic_launcher_background 2.xml")
+# or uppercase letters so they never get committed again.
+* *
+*[A-Z]*
