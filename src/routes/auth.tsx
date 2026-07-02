@@ -51,9 +51,9 @@ function AuthPage() {
   }
 
   return (
-    // Stable small-viewport height avoids Android WebView relayout loops while
-    // the keyboard opens; the page can still scroll to the focused field.
-    <div className="min-h-[100svh] overflow-y-auto bg-background text-foreground px-6 pt-12 pb-8">
+    // Keep the auth screen as normal document flow. Nested scroll containers
+    // and dynamic viewport units can fight Android WebView while IME opens.
+    <div className="min-h-screen bg-background text-foreground px-6 pt-12 pb-8">
       <div className="max-w-md mx-auto w-full">
         <div className="mb-10 flex flex-col items-center text-center">
           <Logo className="h-40 w-auto mb-4" />
