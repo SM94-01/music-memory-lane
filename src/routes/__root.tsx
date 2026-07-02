@@ -123,6 +123,7 @@ function RootComponent() {
       <ThemeProvider>
         <AuthProvider>
           <Outlet />
+          <Toaster />
         </AuthProvider>
       </ThemeProvider>
     </QueryClientProvider>
