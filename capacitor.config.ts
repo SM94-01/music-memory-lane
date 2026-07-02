@@ -9,6 +9,9 @@ const config: CapacitorConfig = {
     androidScheme: 'https',
   },
   plugins: {
+    SystemBars: {
+      insetsHandling: 'disable',
+    },
     PushNotifications: {
       presentationOptions: ['badge', 'sound', 'alert'],
     },

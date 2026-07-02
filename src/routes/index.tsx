@@ -22,11 +22,6 @@ type Tab = "following" | "suggested";
 
 function ExplorePage() {
   const [tab, setTab] = useState<Tab>("following");
-  useEffect(() => {
-    const h = () => setTab("suggested");
-    window.addEventListener("trax:open-suggested", h);
-    return () => window.removeEventListener("trax:open-suggested", h);
-  }, []);
   return (
     <MobileShell>
       <div className="px-5 pt-5">
@@ -36,7 +31,7 @@ function ExplorePage() {
           <TabBtn active={tab === "suggested"} onClick={() => setTab("suggested")}>Suggested</TabBtn>
         </div>
       </div>
-      {tab === "following" ? <FollowingFeed /> : <SuggestedTab />}
+      {tab === "following" ? <FollowingFeed onDiscover={() => setTab("suggested")} /> : <SuggestedTab />}
     </MobileShell>
   );
 }
@@ -58,7 +53,7 @@ type LogRow = {
   comments: { count: number }[];
 };
 
-function FollowingFeed() {
+function FollowingFeed({ onDiscover }: { onDiscover: () => void }) {
   const { data: me } = useMyProfile();
   const { data: feed, isLoading } = useQuery({
     queryKey: ["feed", me?.id],
@@ -82,10 +77,7 @@ function FollowingFeed() {
     return (
       <div className="px-5 text-center py-12">
         <p className="text-sm text-muted mb-4">You're not following anyone yet.</p>
-        <button onClick={() => {
-          const ev = new CustomEvent("trax:open-suggested");
-          window.dispatchEvent(ev);
-        }} className="text-xs font-mono uppercase tracking-widest text-accent">Discover people →</button>
+        <button onClick={onDiscover} className="text-xs font-mono uppercase tracking-widest text-accent">Discover people →</button>
       </div>
     );
   }
