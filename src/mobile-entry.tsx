@@ -5,10 +5,7 @@ import { createRoot } from "react-dom/client";
 import { RouterProvider } from "@tanstack/react-router";
 
 import { getRouter } from "./router";
-import { installMobileInputDiagnostics } from "./lib/mobileInputDiagnostics";
 import "./styles.css";
-
-installMobileInputDiagnostics();
 
 const router = getRouter();
 

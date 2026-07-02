@@ -58,7 +58,7 @@ export function CommentsSheet({ logId, onClose, onCountChange }: { logId: string
 
   return (
     <div className="fixed inset-0 z-[100] flex items-end" onClick={onClose}>
-      <div className="absolute inset-0 bg-background/70 backdrop-blur-sm" />
+      <div className="absolute inset-0 bg-background/80" />
       <div className="relative w-full max-w-md mx-auto bg-background border-t border-border rounded-t-2xl p-5 pb-6 max-h-[80vh] flex flex-col animate-in slide-in-from-bottom" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between mb-4">
           <h2 className="font-extrabold tracking-tight text-lg">Comments</h2>
