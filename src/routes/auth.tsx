@@ -1,6 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState, type FormEvent } from "react";
-import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { Loader2 } from "lucide-react";
 import { Logo } from "@/components/Logo";
@@ -12,13 +11,10 @@ export const Route = createFileRoute("/auth")({
 
 function AuthPage() {
   const navigate = useNavigate();
-  const { session } = useAuth();
-  const stableSession = session?.user?.id;
+  const { session, signIn, signUp } = useAuth();
   const [mode, setMode] = useState<"signin" | "signup">("signin");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [name, setName] = useState("");
   const [err, setErr] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
@@ -29,19 +25,23 @@ function AuthPage() {
 
   async function submit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
+    if (busy) return;
+
+    const form = e.currentTarget;
+    const data = new FormData(form);
+    const email = String(data.get("email") ?? "").trim();
+    const password = String(data.get("password") ?? "");
+    const name = String(data.get("name") ?? "").trim();
+
     setBusy(true);
     setErr(null);
+    setNotice(null);
     try {
       if (mode === "signup") {
-        const { error } = await supabase.auth.signUp({
-          email,
-          password,
-          options: { data: { name }, emailRedirectTo: window.location.origin },
-        });
-        if (error) throw error;
+        await signUp(email, password, name);
+        setNotice("Account creato. Se richiesto, controlla la mail per confermare l'accesso.");
       } else {
-        const { error } = await supabase.auth.signInWithPassword({ email, password });
-        if (error) throw error;
+        await signIn(email, password);
       }
     } catch (e) {
       setErr((e as Error).message);
@@ -50,11 +50,11 @@ function AuthPage() {
     }
   }
 
+  const inputClass = "auth-input w-full bg-secondary/40 border border-border rounded-full px-4 py-3 outline-none focus:border-accent";
+
   return (
-    // Keep the auth screen as normal document flow. Nested scroll containers
-    // and dynamic viewport units can fight Android WebView while IME opens.
-    <div className="min-h-screen bg-background text-foreground px-6 pt-12 pb-8">
-      <div className="max-w-md mx-auto w-full">
+    <main className="auth-page min-h-screen bg-background text-foreground px-6 pt-10 pb-8">
+      <section className="max-w-md mx-auto w-full">
         <div className="mb-10 flex flex-col items-center text-center">
           <Logo className="h-40 w-auto mb-4" />
           <p className="text-sm text-muted mt-1">Track your music journey.</p>
@@ -65,7 +65,11 @@ function AuthPage() {
             <button
               key={m}
               type="button"
-              onClick={() => setMode(m)}
+              onClick={() => {
+                setMode(m);
+                setErr(null);
+                setNotice(null);
+              }}
               className={`flex-1 py-2 text-xs font-bold uppercase tracking-widest rounded-full ${mode === m ? "bg-foreground text-background" : "text-muted"}`}
             >
               {m === "signin" ? "Sign in" : "Sign up"}
@@ -76,38 +80,35 @@ function AuthPage() {
         <form onSubmit={submit} className="space-y-3">
           {mode === "signup" && (
             <input
+              name="name"
               type="text"
               placeholder="Your name"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
               required
               autoComplete="name"
               autoCapitalize="words"
               autoCorrect="off"
               spellCheck={false}
               enterKeyHint="next"
-              className="w-full bg-secondary/40 border border-border rounded-full px-4 py-3 outline-none focus:border-accent"
+              className={inputClass}
             />
           )}
           <input
+            name="email"
             type="email"
             inputMode="email"
             placeholder="Email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
             required
             autoComplete="email"
             autoCapitalize="none"
             autoCorrect="off"
             spellCheck={false}
             enterKeyHint="next"
-            className="w-full bg-secondary/40 border border-border rounded-full px-4 py-3 outline-none focus:border-accent"
+            className={inputClass}
           />
           <input
+            name="password"
             type="password"
             placeholder="Password (min. 6 chars)"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
             minLength={6}
             required
             autoComplete={mode === "signup" ? "new-password" : "current-password"}
@@ -115,9 +116,10 @@ function AuthPage() {
             autoCorrect="off"
             spellCheck={false}
             enterKeyHint="go"
-            className="w-full bg-secondary/40 border border-border rounded-full px-4 py-3 outline-none focus:border-accent"
+            className={inputClass}
           />
           {err && <p className="text-xs text-destructive">{err}</p>}
+          {notice && <p className="text-xs text-muted">{notice}</p>}
           <button
             type="submit"
             disabled={busy}
@@ -132,7 +134,7 @@ function AuthPage() {
           By continuing you agree to share your music taste with the world.
           <br />Your reviews stay yours.
         </p>
-      </div>
-    </div>
+      </section>
+    </main>
   );
 }
