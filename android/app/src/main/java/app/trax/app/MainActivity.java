@@ -18,7 +18,8 @@ public class MainActivity extends BridgeActivity {
             WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE
         );
 
-        WebView webView = getBridge().getWebView();
+        WebView webView = getBridge() != null ? getBridge().getWebView() : null;
+        if (webView == null) return;
         webView.setFocusable(true);
         webView.setFocusableInTouchMode(true);
         webView.setDescendantFocusability(ViewGroup.FOCUS_AFTER_DESCENDANTS);
