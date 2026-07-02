@@ -12,17 +12,24 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;800&family=JetBrains+Mono:wght@400;500&display=swap" />
     <style>
+      /* ========== CRITICAL: Prevent layout thrashing on mobile ========== */
+      
+      * {
+        -webkit-user-select: text;
+        -webkit-touch-callout: none;
+      }
+
       html, body {
         position: fixed;
         width: 100%;
         height: 100vh;
-        height: 100dvh; /* Viewport dinamico per mobile */
+        height: 100dvh;
         overflow: hidden;
-      }
-
-      body {
         margin: 0;
         padding: 0;
+        top: 0;
+        left: 0;
+        font-size: 16px; /* Prevent iOS zoom on input focus */
       }
 
       #root {
@@ -30,20 +37,128 @@
         height: 100%;
         display: flex;
         flex-direction: column;
+        position: absolute;
+        top: 0;
+        left: 0;
       }
 
+      /* CRITICAL: Disable all transitions during keyboard visibility */
+      html.ime-active * {
+        transition: none !important;
+        animation: none !important;
+      }
+
+      /* Prevent layout recalculation on input focus */
       input, textarea, select {
-        font-size: 16px; /* Previene zoom automatico su iOS durante focus */
+        font-size: 16px;
+        font-family: inherit;
+        -webkit-appearance: none;
+        appearance: none;
       }
 
-      /* Evita layout shift quando la tastiera appare */
-      html {
+      /* Disable momentum scrolling to prevent layout thrashing */
+      * {
+        -webkit-scroll-behavior: auto;
+        scroll-behavior: auto;
+      }
+
+      /* Prevent iOS keyboard from causing layout issues */
+      body {
+        position: fixed;
         overflow: hidden;
+      }
+
+      /* Ensure main content area stays fixed */
+      main, section {
+        position: relative;
+        flex-shrink: 0;
+      }
+
+      /* Aggressive mobile optimization */
+      @media (max-width: 768px) {
+        html {
+          overflow: hidden;
+          position: fixed;
+        }
+
+        body {
+          width: 100vw;
+          height: 100vh;
+          position: fixed;
+          top: 0;
+          left: 0;
+          overflow: hidden;
+        }
+
+        #root {
+          will-change: auto;
+          -webkit-backface-visibility: hidden;
+          backface-visibility: hidden;
+        }
+
+        input:focus, textarea:focus {
+          outline: none;
+        }
+
+        /* Reduce motion during keyboard interaction */
+        @media (prefers-reduced-motion: no-preference) {
+          input:focus, textarea:focus {
+            transition: none;
+          }
+        }
+      }
+
+      /* Prevent layout shift on keyboard show/hide */
+      .auth-page {
+        min-height: 100vh;
+        min-height: 100dvh;
+        display: flex;
+        flex-direction: column;
+      }
+
+      .auth-input {
+        -webkit-tap-highlight-color: transparent;
+        -webkit-appearance: none;
+        appearance: none;
+      }
+
+      /* Disable problematic CSS animations during touch */
+      @supports (padding: max(0px)) {
+        body {
+          padding-left: max(0px, env(safe-area-inset-left));
+          padding-right: max(0px, env(safe-area-inset-right));
+          padding-bottom: max(0px, env(safe-area-inset-bottom));
+        }
       }
     </style>
   </head>
   <body>
     <div id="root"></div>
     <script type="module" src="/src/mobile-entry.tsx"></script>
+    <script>
+      /* Detect keyboard state and add class to prevent transitions */
+      if (typeof window !== 'undefined') {
+        const html = document.documentElement;
+        
+        window.addEventListener('resize', () => {
+          const isKeyboardShown = window.innerHeight < window.innerWidth * 0.6;
+          if (isKeyboardShown) {
+            html.classList.add('ime-active');
+          } else {
+            html.classList.remove('ime-active');
+          }
+        });
+
+        /* Fallback for Capacitor */
+        if (window.Keyboard) {
+          window.Keyboard.onShow(() => {
+            html.classList.add('ime-active');
+          });
+          window.Keyboard.onHide(() => {
+            html.classList.remove('ime-active');
+          });
+        }
+      }
+    </script>
   </body>
 </html>
