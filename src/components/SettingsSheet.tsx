@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { X, Loader2, LogOut, Check, Trash2 } from "lucide-react";
 import { useNavigate } from "@tanstack/react-router";
 import { THEMES, useTheme } from "@/lib/theme";
-import { deleteMyAccount } from "@/lib/account.functions";
+
 
 type Prefs = { new_follower: boolean; likes: boolean; comments: boolean };
 
@@ -81,7 +81,8 @@ export function SettingsSheet({ profileId, onClose }: { profileId: string; onClo
             if (!confirm("Delete your account? This is permanent and removes your profile, logs, lists and reviews.")) return;
             if (!confirm("Really delete? This cannot be undone.")) return;
             try {
-              await deleteMyAccount();
+              const { error } = await supabase.functions.invoke("delete-account");
+              if (error) throw error;
               await supabase.auth.signOut();
               navigate({ to: "/auth", replace: true });
             } catch (e: any) {
