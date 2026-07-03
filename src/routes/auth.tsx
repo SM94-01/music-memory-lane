@@ -53,7 +53,10 @@ function AuthPage() {
   const inputClass = "auth-input w-full bg-secondary/40 border border-border rounded-full px-4 py-3 outline-none focus:border-accent";
 
   return (
-    <main className="auth-page bg-background text-foreground px-6 pt-10 pb-8">
+    <main
+      className="auth-page bg-background text-foreground px-6 pb-8"
+      style={{ paddingTop: "calc(env(safe-area-inset-top, 0px) + 2.5rem)" }}
+    >
       <section className="max-w-md mx-auto w-full">
         <div className="mb-10 flex flex-col items-center text-center">
           <Logo className="h-40 w-auto mb-4" />
