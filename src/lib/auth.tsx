@@ -73,16 +73,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [qc]);
 
   const signUp = useCallback(async (email: string, password: string, name?: string) => {
-    // On Capacitor, window.location.origin is `https://localhost` which is not
-    // a valid Supabase redirect. Only pass emailRedirectTo on real web origins.
     const origin = typeof window !== "undefined" ? window.location.origin : "";
-    const isCapacitor = origin.includes("localhost") || origin.startsWith("capacitor://") || origin.startsWith("file://");
     const { error } = await supabase.auth.signUp({
       email,
       password,
       options: {
         data: { name: name?.trim() || "" },
-        ...(isCapacitor ? {} : { emailRedirectTo: origin }),
+        emailRedirectTo: origin ? `${origin}/` : undefined,
       },
     });
 
@@ -93,6 +90,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       throw error;
     }
   }, []);
+
 
   const signIn = useCallback(async (email: string, password: string) => {
     const { error } = await supabase.auth.signInWithPassword({ email, password });
