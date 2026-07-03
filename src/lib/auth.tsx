@@ -3,6 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import type { Session } from "@supabase/supabase-js";
 import type { Database } from "@/integrations/supabase/types";
+import { initPushNotifications, teardownPushNotifications } from "@/lib/push";
 
 export type Profile = Database["public"]["Tables"]["profiles"]["Row"];
 
@@ -35,6 +36,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (!active) return;
       setSession(data.session);
       setLoading(false);
+      if (data.session) {
+        // Defer to avoid blocking first paint / input focus on native.
+        setTimeout(() => { void initPushNotifications(); }, 2000);
+      }
     }).catch(() => {
       if (!active) return;
       setSession(null);
@@ -60,9 +65,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       if (event === "SIGNED_OUT") {
         qc.clear();
+        void teardownPushNotifications();
       } else if (event === "SIGNED_IN") {
         // Only invalidate on full sign-in to avoid loops during token refresh
         qc.invalidateQueries();
+        setTimeout(() => { void initPushNotifications(); }, 2000);
       }
     });
 
