@@ -22,7 +22,10 @@ export function MobileShell({ children, hideNav = false }: { children: ReactNode
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <nav className="sticky top-0 z-40 bg-background border-b border-border px-5 py-3 flex items-center justify-between">
+      <nav
+        className="sticky top-0 z-40 bg-background border-b border-border px-5 pb-3 flex items-center justify-between"
+        style={{ paddingTop: "calc(env(safe-area-inset-top, 0px) + 0.75rem)" }}
+      >
         <Link to="/" aria-label="TraX home" className="flex items-center"><Logo className="h-12 w-auto" /></Link>
         <span className="text-[10px] font-mono uppercase tracking-widest text-muted">Track your music journey</span>
       </nav>
