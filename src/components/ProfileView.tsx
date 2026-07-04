@@ -4,6 +4,7 @@ import { Avatar } from "@/components/Avatar";
 import { Stars } from "@/components/Stars";
 import { EditProfileDialog } from "@/components/EditProfileDialog";
 import { SettingsSheet } from "@/components/SettingsSheet";
+import { ShareIdDialog } from "@/components/ShareIdDialog";
 import { Settings, Grid3x3, BookOpen, ListChecks, UserPlus, Check, Share2, Pencil, Loader2, MessageSquare, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -33,6 +34,7 @@ export function ProfileView({ profile, fromProfile = false }: { profile: Profile
   const [tab, setTab] = useState<Tab>("posts");
   const [editing, setEditing] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [shareOpen, setShareOpen] = useState(false);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
 
   const { data: logs } = useQuery({
@@ -72,15 +74,6 @@ export function ProfileView({ profile, fromProfile = false }: { profile: Profile
     },
   });
 
-  async function share() {
-    const url = `${window.location.origin}/u/${profile.handle}`;
-    if (navigator.share) {
-      try { await navigator.share({ title: `${profile.name} on TraX`, url }); } catch {}
-    } else {
-      await navigator.clipboard.writeText(url);
-      alert("Profile link copied!");
-    }
-  }
 
   async function uploadAvatar(file: File) {
     if (!isMe || !session) return;
@@ -169,7 +162,7 @@ export function ProfileView({ profile, fromProfile = false }: { profile: Profile
               <button onClick={() => setEditing(true)} className="flex-1 bg-foreground text-background py-2 rounded-sm text-xs font-bold uppercase tracking-widest flex items-center justify-center gap-2">
                 <Pencil className="size-3.5" /> Edit profile
               </button>
-              <button onClick={share} className="flex-1 border border-border py-2 rounded-sm text-xs font-bold uppercase tracking-widest flex items-center justify-center gap-2">
+              <button onClick={() => setShareOpen(true)} className="flex-1 border border-border py-2 rounded-sm text-xs font-bold uppercase tracking-widest flex items-center justify-center gap-2">
                 <Share2 className="size-3.5" /> Share
               </button>
             </>
@@ -220,6 +213,7 @@ export function ProfileView({ profile, fromProfile = false }: { profile: Profile
 
       {editing && me && <EditProfileDialog profile={me} onClose={() => setEditing(false)} />}
       {settingsOpen && me && <SettingsSheet profileId={me.id} onClose={() => setSettingsOpen(false)} />}
+      {shareOpen && me && <ShareIdDialog me={me} onClose={() => setShareOpen(false)} />}
     </>
   );
 }
