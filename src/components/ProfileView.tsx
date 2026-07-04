@@ -34,6 +34,7 @@ export function ProfileView({ profile, fromProfile = false }: { profile: Profile
   const [tab, setTab] = useState<Tab>("posts");
   const [editing, setEditing] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [shareOpen, setShareOpen] = useState(false);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
 
   const { data: logs } = useQuery({
