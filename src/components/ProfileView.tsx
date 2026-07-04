@@ -4,6 +4,7 @@ import { Avatar } from "@/components/Avatar";
 import { Stars } from "@/components/Stars";
 import { EditProfileDialog } from "@/components/EditProfileDialog";
 import { SettingsSheet } from "@/components/SettingsSheet";
+import { ShareIdDialog } from "@/components/ShareIdDialog";
 import { Settings, Grid3x3, BookOpen, ListChecks, UserPlus, Check, Share2, Pencil, Loader2, MessageSquare, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
