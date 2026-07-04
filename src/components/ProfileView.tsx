@@ -213,6 +213,7 @@ export function ProfileView({ profile, fromProfile = false }: { profile: Profile
 
       {editing && me && <EditProfileDialog profile={me} onClose={() => setEditing(false)} />}
       {settingsOpen && me && <SettingsSheet profileId={me.id} onClose={() => setSettingsOpen(false)} />}
+      {shareOpen && me && <ShareIdDialog me={me} onClose={() => setShareOpen(false)} />}
     </>
   );
 }
