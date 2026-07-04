@@ -171,7 +171,7 @@ export function ProfileView({ profile, fromProfile = false }: { profile: Profile
               <button onClick={() => setEditing(true)} className="flex-1 bg-foreground text-background py-2 rounded-sm text-xs font-bold uppercase tracking-widest flex items-center justify-center gap-2">
                 <Pencil className="size-3.5" /> Edit profile
               </button>
-              <button onClick={share} className="flex-1 border border-border py-2 rounded-sm text-xs font-bold uppercase tracking-widest flex items-center justify-center gap-2">
+              <button onClick={() => setShareOpen(true)} className="flex-1 border border-border py-2 rounded-sm text-xs font-bold uppercase tracking-widest flex items-center justify-center gap-2">
                 <Share2 className="size-3.5" /> Share
               </button>
             </>
