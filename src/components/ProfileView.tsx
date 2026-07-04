@@ -74,15 +74,6 @@ export function ProfileView({ profile, fromProfile = false }: { profile: Profile
     },
   });
 
-  async function shareOtherProfile() {
-    const url = `${window.location.origin}/u/${profile.handle}`;
-    if (navigator.share) {
-      try { await navigator.share({ title: `${profile.name} on TraX`, url }); } catch {}
-    } else {
-      await navigator.clipboard.writeText(url);
-      toast("Profile link copied!");
-    }
-  }
 
   async function uploadAvatar(file: File) {
     if (!isMe || !session) return;
