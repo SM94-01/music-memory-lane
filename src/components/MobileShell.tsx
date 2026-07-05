@@ -1,5 +1,5 @@
 import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useEffect, type ReactNode } from "react";
 import { Compass, Plus, User } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { Logo } from "@/components/Logo";
@@ -8,22 +8,6 @@ export function MobileShell({ children, hideNav = false }: { children: ReactNode
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const { session, loading } = useAuth();
   const navigate = useNavigate();
-  const [navHidden, setNavHidden] = useState(false);
-  const lastY = useRef(0);
-
-  useEffect(() => {
-    lastY.current = window.scrollY;
-    const onScroll = () => {
-      const y = window.scrollY;
-      const dy = y - lastY.current;
-      if (Math.abs(dy) < 8) return;
-      if (dy > 0 && y > 60) setNavHidden(true);
-      else if (dy < 0) setNavHidden(false);
-      lastY.current = y;
-    };
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
-  }, []);
 
   useEffect(() => {
     if (!loading && !session) navigate({ to: "/auth", replace: true });
@@ -48,7 +32,7 @@ export function MobileShell({ children, hideNav = false }: { children: ReactNode
       <main className="max-w-md mx-auto pb-32">{children}</main>
 
       {!hideNav && (
-        <div className={`fixed bottom-5 left-1/2 -translate-x-1/2 w-[calc(100%-1.5rem)] max-w-sm z-50 transition-transform duration-300 ${navHidden ? "translate-y-[150%]" : "translate-y-0"}`} style={{ transform: `translateX(-50%) translateY(${navHidden ? "150%" : "0"})` }}>
+        <div className="fixed bottom-5 left-1/2 -translate-x-1/2 w-[calc(100%-1.5rem)] max-w-sm z-40">
           <div className="bg-foreground text-background px-3 py-2 flex justify-between items-center rounded-full shadow-2xl ring-4 ring-background/80">
             <NavItem to="/" active={isActive("/") && !isActive("/profile") && !isActive("/add")} label="Explore">
               <Compass className="size-5" strokeWidth={2.2} />
