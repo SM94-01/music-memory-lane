@@ -32,7 +32,7 @@ export function MobileShell({ children, hideNav = false }: { children: ReactNode
       <main className="max-w-md mx-auto pb-32">{children}</main>
 
       {!hideNav && (
-        <div className={`fixed bottom-5 left-1/2 -translate-x-1/2 w-[calc(100%-1.5rem)] max-w-sm z-50 transition-transform duration-300 ${navHidden ? "translate-y-[150%]" : "translate-y-0"}`} style={{ transform: `translateX(-50%) translateY(${navHidden ? "150%" : "0"})` }}>
+        <div className="fixed bottom-5 left-1/2 -translate-x-1/2 w-[calc(100%-1.5rem)] max-w-sm z-40">
           <div className="bg-foreground text-background px-3 py-2 flex justify-between items-center rounded-full shadow-2xl ring-4 ring-background/80">
             <NavItem to="/" active={isActive("/") && !isActive("/profile") && !isActive("/add")} label="Explore">
               <Compass className="size-5" strokeWidth={2.2} />
