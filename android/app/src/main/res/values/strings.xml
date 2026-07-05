@@ -2,6 +2,6 @@
 <resources>
     <string name="app_name">TraX</string>
     <string name="title_activity_main">TraX</string>
-    <string name="package_name">com.trax.app</string>
-    <string name="custom_url_scheme">com.trax.app</string>
+    <string name="package_name">com.trax_app.app</string>
+    <string name="custom_url_scheme">com.trax_app.app</string>
 </resources>

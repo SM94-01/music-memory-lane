@@ -1,4 +1,4 @@
-package com.trax.app;
+package com.trax_app.app;
 
 import com.getcapacitor.BridgeActivity;
 

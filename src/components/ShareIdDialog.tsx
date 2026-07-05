@@ -82,7 +82,7 @@ export function ShareIdDialog({ me, onClose }: { me: Profile; onClose: () => voi
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm" onClick={onClose}>
+    <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm" onClick={onClose}>
       <div
         onClick={(e) => e.stopPropagation()}
         className="w-full sm:max-w-sm bg-background border-t sm:border border-border sm:rounded-lg p-5 pb-8 sm:pb-5 space-y-6"
