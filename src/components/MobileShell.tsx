@@ -1,5 +1,5 @@
 import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useEffect, type ReactNode } from "react";
 import { Compass, Plus, User } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { Logo } from "@/components/Logo";
@@ -8,22 +8,6 @@ export function MobileShell({ children, hideNav = false }: { children: ReactNode
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const { session, loading } = useAuth();
   const navigate = useNavigate();
-  const [navHidden, setNavHidden] = useState(false);
-  const lastY = useRef(0);
-
-  useEffect(() => {
-    lastY.current = window.scrollY;
-    const onScroll = () => {
-      const y = window.scrollY;
-      const dy = y - lastY.current;
-      if (Math.abs(dy) < 8) return;
-      if (dy > 0 && y > 60) setNavHidden(true);
-      else if (dy < 0) setNavHidden(false);
-      lastY.current = y;
-    };
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
-  }, []);
 
   useEffect(() => {
     if (!loading && !session) navigate({ to: "/auth", replace: true });
