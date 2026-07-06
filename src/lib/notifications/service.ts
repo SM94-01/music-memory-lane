@@ -73,12 +73,11 @@ class NotificationService {
   private async isPrefEnabled(userId: string, key: NotificationPrefKey): Promise<boolean> {
     const { data } = await supabase
       .from("notification_prefs")
-      .select("new_follower, likes, comments")
+      .select("new_follower, likes, comments, album_shares")
       .eq("user_id", userId)
       .maybeSingle();
-    // Default to enabled if the user has no row yet (matches Settings UI default).
     if (!data) return true;
-    return data[key] !== false;
+    return (data as Record<string, boolean>)[key] !== false;
   }
 
   private isDuplicate(key: string): boolean {
