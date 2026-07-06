@@ -221,6 +221,7 @@ function SuggestedTab() {
 
   return (
     <section className="mt-2">
+      <SharedWithYou />
       <div className="px-5 mb-8">
         <div className="flex items-center gap-2 text-xs font-mono uppercase tracking-[0.2em] text-accent mb-3">
           <TrendingUp className="size-3.5" /> People to follow
