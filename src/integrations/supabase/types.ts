@@ -67,6 +67,66 @@ export type Database = {
           },
         ]
       }
+      album_shares: {
+        Row: {
+          album_key: string
+          artist: string
+          cover_url: string | null
+          created_at: string
+          from_user_id: string
+          genre: string | null
+          id: string
+          message: string | null
+          read_at: string | null
+          title: string
+          to_user_id: string
+          year: number | null
+        }
+        Insert: {
+          album_key: string
+          artist: string
+          cover_url?: string | null
+          created_at?: string
+          from_user_id: string
+          genre?: string | null
+          id?: string
+          message?: string | null
+          read_at?: string | null
+          title: string
+          to_user_id: string
+          year?: number | null
+        }
+        Update: {
+          album_key?: string
+          artist?: string
+          cover_url?: string | null
+          created_at?: string
+          from_user_id?: string
+          genre?: string | null
+          id?: string
+          message?: string | null
+          read_at?: string | null
+          title?: string
+          to_user_id?: string
+          year?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "album_shares_from_user_id_fkey"
+            columns: ["from_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "album_shares_to_user_id_fkey"
+            columns: ["to_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       comments: {
         Row: {
           body: string
@@ -243,6 +303,7 @@ export type Database = {
       }
       notification_prefs: {
         Row: {
+          album_shares: boolean
           comments: boolean
           likes: boolean
           new_follower: boolean
@@ -250,6 +311,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          album_shares?: boolean
           comments?: boolean
           likes?: boolean
           new_follower?: boolean
@@ -257,6 +319,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          album_shares?: boolean
           comments?: boolean
           likes?: boolean
           new_follower?: boolean

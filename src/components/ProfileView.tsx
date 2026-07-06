@@ -5,6 +5,7 @@ import { Stars } from "@/components/Stars";
 import { EditProfileDialog } from "@/components/EditProfileDialog";
 import { SettingsSheet } from "@/components/SettingsSheet";
 import { ShareIdDialog } from "@/components/ShareIdDialog";
+import { FollowListDialog } from "@/components/FollowListDialog";
 import { Settings, Grid3x3, BookOpen, ListChecks, UserPlus, Check, Share2, Pencil, Loader2, MessageSquare, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -35,6 +36,7 @@ export function ProfileView({ profile, fromProfile = false }: { profile: Profile
   const [editing, setEditing] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [shareOpen, setShareOpen] = useState(false);
+  const [followList, setFollowList] = useState<null | "followers" | "following">(null);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
 
   const { data: logs } = useQuery({
@@ -141,8 +143,8 @@ export function ProfileView({ profile, fromProfile = false }: { profile: Profile
         />
         <div className="flex-1 grid grid-cols-3 text-center">
           <Stat value={counts?.tracked ?? 0} label="Albums" />
-          <Stat value={counts?.followers ?? 0} label="Followers" />
-          <Stat value={counts?.following ?? 0} label="Following" />
+          <Stat value={counts?.followers ?? 0} label="Followers" onClick={() => setFollowList("followers")} />
+          <Stat value={counts?.following ?? 0} label="Following" onClick={() => setFollowList("following")} />
         </div>
       </div>
 
@@ -214,6 +216,7 @@ export function ProfileView({ profile, fromProfile = false }: { profile: Profile
       {editing && me && <EditProfileDialog profile={me} onClose={() => setEditing(false)} />}
       {settingsOpen && me && <SettingsSheet profileId={me.id} onClose={() => setSettingsOpen(false)} />}
       {shareOpen && me && <ShareIdDialog me={me} onClose={() => setShareOpen(false)} />}
+      {followList && <FollowListDialog profileId={profile.id} mode={followList} onClose={() => setFollowList(null)} />}
     </>
   );
 }
@@ -255,13 +258,21 @@ function FollowButton({ targetId }: { targetId: string }) {
   );
 }
 
-function Stat({ value, label }: { value: number; label: string }) {
-  return (
-    <div>
+function Stat({ value, label, onClick }: { value: number; label: string; onClick?: () => void }) {
+  const content = (
+    <>
       <span className="block font-mono text-lg font-bold">{value.toLocaleString()}</span>
       <span className="text-[9px] text-muted uppercase tracking-widest">{label}</span>
-    </div>
+    </>
   );
+  if (onClick) {
+    return (
+      <button onClick={onClick} className="hover:opacity-70 transition-opacity">
+        {content}
+      </button>
+    );
+  }
+  return <div>{content}</div>;
 }
 function TabBtn({ active, onClick, icon }: { active: boolean; onClick: () => void; icon: React.ReactNode }) {
   return (

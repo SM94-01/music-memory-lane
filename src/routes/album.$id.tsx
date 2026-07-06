@@ -3,12 +3,13 @@ import { MobileShell } from "@/components/MobileShell";
 import { Stars } from "@/components/Stars";
 import { Avatar } from "@/components/Avatar";
 import { useEffect, useState } from "react";
-import { ArrowLeft, Check, Bookmark, BookmarkCheck, Loader2 } from "lucide-react";
+import { ArrowLeft, Check, Bookmark, BookmarkCheck, Loader2, Send } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useMyProfile } from "@/lib/auth";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { getMockAlbum, mockCoverFor } from "@/data/mock";
 import { AlbumCover } from "@/components/AlbumCover";
+import { ShareAlbumDialog } from "@/components/ShareAlbumDialog";
 
 type AlbumInfo = { title: string; artist: string; year: number | null; cover: string | null; genre: string | null };
 
@@ -29,6 +30,7 @@ function AlbumPage() {
   const [myLogId, setMyLogId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [watchId, setWatchId] = useState<string | null>(null);
+  const [shareOpen, setShareOpen] = useState(false);
 
   useEffect(() => {
     if (!me) return;
@@ -193,6 +195,13 @@ function AlbumPage() {
             )}
           </div>
 
+          <button
+            onClick={() => setShareOpen(true)}
+            className="mt-3 w-full py-3 font-bold text-sm rounded-sm border border-border text-muted hover:text-accent hover:border-accent flex items-center justify-center gap-2"
+          >
+            <Send className="size-4" /> Share with a friend
+          </button>
+
           <div className="mt-10">
             <h2 className="text-xs font-mono uppercase tracking-[0.2em] text-accent mb-4">Community reviews</h2>
             <div className="space-y-6">
@@ -213,6 +222,7 @@ function AlbumPage() {
           </div>
         </section>
       </div>
+      {shareOpen && <ShareAlbumDialog albumKey={id} album={info} onClose={() => setShareOpen(false)} />}
     </MobileShell>
   );
 }

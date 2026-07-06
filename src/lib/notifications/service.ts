@@ -59,7 +59,7 @@ class NotificationService {
   // ---------- internal helpers ----------
 
   private async resolveRecipient(event: NotificationEvent): Promise<string | null> {
-    if (event.type === "follow") return event.recipientId;
+    if (event.type === "follow" || event.type === "album_share") return event.recipientId;
     // like / comment: recipient is the owner of the album log.
     const { data, error } = await supabase
       .from("album_logs")
@@ -73,12 +73,11 @@ class NotificationService {
   private async isPrefEnabled(userId: string, key: NotificationPrefKey): Promise<boolean> {
     const { data } = await supabase
       .from("notification_prefs")
-      .select("new_follower, likes, comments")
+      .select("new_follower, likes, comments, album_shares")
       .eq("user_id", userId)
       .maybeSingle();
-    // Default to enabled if the user has no row yet (matches Settings UI default).
     if (!data) return true;
-    return data[key] !== false;
+    return (data as Record<string, boolean>)[key] !== false;
   }
 
   private isDuplicate(key: string): boolean {

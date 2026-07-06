@@ -3,7 +3,7 @@ import { MobileShell } from "@/components/MobileShell";
 import { Stars } from "@/components/Stars";
 import { Avatar } from "@/components/Avatar";
 import { CommentsSheet } from "@/components/CommentsSheet";
-import { Heart, MessageCircle, TrendingUp, UserPlus, Loader2 } from "lucide-react";
+import { Heart, MessageCircle, TrendingUp, UserPlus, Loader2, Send, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useMyProfile } from "@/lib/auth";
@@ -221,6 +221,7 @@ function SuggestedTab() {
 
   return (
     <section className="mt-2">
+      <SharedWithYou />
       <div className="px-5 mb-8">
         <div className="flex items-center gap-2 text-xs font-mono uppercase tracking-[0.2em] text-accent mb-3">
           <TrendingUp className="size-3.5" /> People to follow
@@ -290,5 +291,75 @@ function SuggestedUser({ user, score }: { user: { id: string; handle: string; na
         <UserPlus className="size-3" /> Follow
       </button>
     </li>
+  );
+}
+
+type Share = {
+  id: string;
+  album_key: string;
+  title: string;
+  artist: string;
+  year: number | null;
+  cover_url: string | null;
+  message: string | null;
+  created_at: string;
+  from: { handle: string; name: string; avatar_url: string | null } | null;
+};
+
+function SharedWithYou() {
+  const { data: me } = useMyProfile();
+  const qc = useQueryClient();
+  const { data: shares } = useQuery({
+    queryKey: ["albumShares", me?.id],
+    enabled: !!me,
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("album_shares")
+        .select("id, album_key, title, artist, year, cover_url, message, created_at, from:profiles!album_shares_from_user_id_fkey(handle, name, avatar_url)")
+        .eq("to_user_id", me!.id)
+        .order("created_at", { ascending: false })
+        .limit(20);
+      return (data as unknown as Share[]) ?? [];
+    },
+  });
+
+  async function dismiss(id: string) {
+    await supabase.from("album_shares").delete().eq("id", id);
+    qc.invalidateQueries({ queryKey: ["albumShares"] });
+  }
+
+  if (!shares || shares.length === 0) return null;
+
+  return (
+    <div className="px-5 mb-8">
+      <div className="flex items-center gap-2 text-xs font-mono uppercase tracking-[0.2em] text-accent mb-3">
+        <Send className="size-3.5" /> Shared with you
+      </div>
+      <ul className="space-y-3">
+        {shares.map((s) => {
+          const cover = s.cover_url || mockCoverFor(s.album_key);
+          return (
+            <li key={s.id} className="flex items-center gap-3 border border-border rounded-sm p-2.5">
+              <Link to="/album/$id" params={{ id: s.album_key }} className="flex items-center gap-3 flex-1 min-w-0">
+                <div className="size-14 rounded-xs shrink-0 overflow-hidden bg-secondary [container-type:inline-size]">
+                  <AlbumCover src={cover} title={s.title} artist={s.artist} className="size-full" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-bold truncate">{s.title}</p>
+                  <p className="text-[11px] text-muted truncate">{s.artist}{s.year ? ` • ${s.year}` : ""}</p>
+                  <p className="text-[10px] text-muted truncate mt-0.5">
+                    from <span className="text-foreground font-bold">{s.from?.name ?? "someone"}</span>
+                    {s.message ? <span className="italic"> · “{s.message}”</span> : null}
+                  </p>
+                </div>
+              </Link>
+              <button onClick={() => dismiss(s.id)} className="text-muted hover:text-destructive p-1.5 shrink-0" aria-label="Dismiss">
+                <X className="size-4" />
+              </button>
+            </li>
+          );
+        })}
+      </ul>
+    </div>
   );
 }

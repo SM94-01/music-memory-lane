@@ -5,18 +5,18 @@ import { useNavigate } from "@tanstack/react-router";
 import { THEMES, useTheme } from "@/lib/theme";
 
 
-type Prefs = { new_follower: boolean; likes: boolean; comments: boolean };
+type Prefs = { new_follower: boolean; likes: boolean; comments: boolean; album_shares: boolean };
 
 export function SettingsSheet({ profileId, onClose }: { profileId: string; onClose: () => void }) {
   const navigate = useNavigate();
   const { theme, setTheme } = useTheme();
-  const [prefs, setPrefs] = useState<Prefs>({ new_follower: true, likes: true, comments: true });
+  const [prefs, setPrefs] = useState<Prefs>({ new_follower: true, likes: true, comments: true, album_shares: true });
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     (async () => {
-      const { data } = await supabase.from("notification_prefs").select("new_follower, likes, comments").eq("user_id", profileId).maybeSingle();
-      if (data) setPrefs({ new_follower: data.new_follower, likes: data.likes, comments: data.comments });
+      const { data } = await supabase.from("notification_prefs").select("new_follower, likes, comments, album_shares").eq("user_id", profileId).maybeSingle();
+      if (data) setPrefs({ new_follower: data.new_follower, likes: data.likes, comments: data.comments, album_shares: (data as any).album_shares ?? true });
       setLoading(false);
     })();
   }, [profileId]);
@@ -47,6 +47,7 @@ export function SettingsSheet({ profileId, onClose }: { profileId: string; onClo
             <Row label="New followers" desc="Tell me when someone follows me" on={prefs.new_follower} onChange={() => toggle("new_follower")} />
             <Row label="Likes" desc="Likes on my logs and reviews" on={prefs.likes} onChange={() => toggle("likes")} />
             <Row label="Comments" desc="Replies on my reviews" on={prefs.comments} onChange={() => toggle("comments")} />
+            <Row label="Album shares" desc="When a friend recommends an album to you" on={prefs.album_shares} onChange={() => toggle("album_shares")} />
           </div>
         )}
         <div className="mt-6">
