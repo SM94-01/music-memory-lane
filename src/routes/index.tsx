@@ -3,7 +3,7 @@ import { MobileShell } from "@/components/MobileShell";
 import { Stars } from "@/components/Stars";
 import { Avatar } from "@/components/Avatar";
 import { CommentsSheet } from "@/components/CommentsSheet";
-import { Heart, MessageCircle, TrendingUp, UserPlus, Loader2 } from "lucide-react";
+import { Heart, MessageCircle, TrendingUp, UserPlus, Loader2, Send, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useMyProfile } from "@/lib/auth";
