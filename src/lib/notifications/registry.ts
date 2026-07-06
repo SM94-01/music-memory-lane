@@ -47,10 +47,16 @@ export const eventRegistry: Registry = {
         : `${e.actorName ?? "Someone"} commented on your log`,
       data: { type: "comment", actor_id: e.actorId, log_id: e.logId },
     }),
-    // Comments can legitimately repeat from the same actor on the same log
-    // (a real conversation). Only suppress accidental double-submits within
-    // a very short 2s window; distinct payloads produce distinct keys.
     dedupKey: (e) =>
       `comment:${e.actorId}:${e.logId}:${Math.floor(Date.now() / 2_000)}:${(e.preview ?? "").slice(0, 40)}`,
+  },
+  album_share: {
+    prefKey: "album_shares",
+    buildPayload: (e) => ({
+      title: "Album recommendation",
+      body: `${e.actorName ?? "Someone"} shared “${e.albumTitle}” with you`,
+      data: { type: "album_share", actor_id: e.actorId, album_key: e.albumKey },
+    }),
+    dedupKey: (e, r) => `share:${e.actorId}:${r}:${e.albumKey}:${Math.floor(Date.now() / 10_000)}`,
   },
 };

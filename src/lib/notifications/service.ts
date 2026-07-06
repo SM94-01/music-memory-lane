@@ -59,7 +59,7 @@ class NotificationService {
   // ---------- internal helpers ----------
 
   private async resolveRecipient(event: NotificationEvent): Promise<string | null> {
-    if (event.type === "follow") return event.recipientId;
+    if (event.type === "follow" || event.type === "album_share") return event.recipientId;
     // like / comment: recipient is the owner of the album log.
     const { data, error } = await supabase
       .from("album_logs")
