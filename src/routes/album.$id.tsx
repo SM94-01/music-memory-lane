@@ -167,13 +167,42 @@ function AlbumPage() {
           </div>
 
           <div className="py-6 border-y border-border my-6">
-            <div className="flex items-center justify-center gap-2 text-3xl">
-              {[1, 2, 3, 4, 5].map((n) => (
-                <button key={n} onClick={() => setRating(n)} className={n <= rating ? "text-accent" : "text-muted/20"}>★</button>
-              ))}
+            <div className="flex items-center justify-center gap-1 text-3xl leading-none">
+              {[1, 2, 3, 4, 5].map((n) => {
+                const halfVal = n - 0.5;
+                const fullVal = n;
+                const fillPct = rating >= fullVal ? 100 : rating >= halfVal ? 50 : 0;
+                return (
+                  <span key={n} className="relative inline-block select-none" aria-label={`Rate ${n}`}>
+                    <span className="text-muted/20">★</span>
+                    <span
+                      className="absolute inset-0 overflow-hidden text-accent pointer-events-none"
+                      style={{ width: `${fillPct}%` }}
+                      aria-hidden
+                    >
+                      ★
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setRating(rating === halfVal ? 0 : halfVal)}
+                      className="absolute inset-y-0 left-0 w-1/2"
+                      aria-label={`${halfVal} stars`}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setRating(rating === fullVal ? 0 : fullVal)}
+                      className="absolute inset-y-0 right-0 w-1/2"
+                      aria-label={`${fullVal} stars`}
+                    />
+                  </span>
+                );
+              })}
             </div>
-            <p className="text-center text-[9px] text-muted uppercase tracking-widest mt-1">Your rating</p>
+            <p className="text-center text-[9px] text-muted uppercase tracking-widest mt-2">
+              Your rating {rating ? `— ${rating}` : ""}
+            </p>
           </div>
+
 
           <textarea
             value={review} onChange={(e) => setReview(e.target.value)}
