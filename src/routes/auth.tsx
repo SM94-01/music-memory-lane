@@ -29,9 +29,7 @@ function AuthPage() {
 
     const form = e.currentTarget;
     const data = new FormData(form);
-    const email = String(data.get("email") ?? "").trim();
-    const password = String(data.get("password") ?? "");
-    const name = String(data.get("name") ?? "").trim();
+    const name = String(data.get("username") ?? "").trim();
 
     setBusy(true);
     setErr(null);
