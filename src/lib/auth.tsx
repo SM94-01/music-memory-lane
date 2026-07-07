@@ -79,13 +79,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
   }, [qc]);
 
-  const signUp = useCallback(async (email: string, password: string, name?: string) => {
+  const signUp = useCallback(async (email: string, password: string, username?: string) => {
     const origin = typeof window !== "undefined" ? window.location.origin : "";
+    const cleaned = (username ?? "").trim().toLowerCase().replace(/[^a-z0-9_]/g, "");
+    if (!cleaned || cleaned.length < 3) {
+      throw new Error("Lo username deve avere almeno 3 caratteri (lettere, numeri o _).");
+    }
+
+    // Case-insensitive uniqueness check
+    const { data: taken, error: checkErr } = await supabase
+      .from("profiles")
+      .select("id")
+      .ilike("handle", cleaned)
+      .maybeSingle();
+    if (checkErr) throw checkErr;
+    if (taken) throw new Error("Questo username è già in uso. Scegline un altro.");
+
     const { error } = await supabase.auth.signUp({
       email,
       password,
       options: {
-        data: { name: name?.trim() || "" },
+        data: { username: cleaned, name: cleaned },
         emailRedirectTo: origin ? `${origin}/` : undefined,
       },
     });
