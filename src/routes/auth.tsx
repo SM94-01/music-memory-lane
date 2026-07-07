@@ -31,7 +31,7 @@ function AuthPage() {
     const data = new FormData(form);
     const email = String(data.get("email") ?? "").trim();
     const password = String(data.get("password") ?? "");
-    const name = String(data.get("name") ?? "").trim();
+    const name = String(data.get("username") ?? "").trim();
 
     setBusy(true);
     setErr(null);
@@ -83,12 +83,15 @@ function AuthPage() {
         <form onSubmit={submit} className="space-y-3">
           {mode === "signup" && (
             <input
-              name="name"
+              name="username"
               type="text"
-              placeholder="Your name"
+              placeholder="Username"
               required
-              autoComplete="name"
-              autoCapitalize="words"
+              minLength={3}
+              pattern="[A-Za-z0-9_]{3,}"
+              title="Solo lettere, numeri o _ (min. 3 caratteri)"
+              autoComplete="username"
+              autoCapitalize="none"
               autoCorrect="off"
               spellCheck={false}
               enterKeyHint="next"
