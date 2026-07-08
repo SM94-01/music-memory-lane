@@ -66,8 +66,8 @@ function ChatPage() {
   }
 
   return (
-    <MobileShell>
-      <div className="flex flex-col min-h-screen">
+    <MobileShell hideNav>
+      <div className="flex flex-col h-[calc(100dvh-6rem)] -mb-32">
         <header className="px-5 py-3 border-b border-border flex items-center gap-3">
           <button onClick={() => router.history.back()} className="p-1 -m-1 text-muted hover:text-foreground" aria-label="Back">
             <ArrowLeft className="size-4" />
