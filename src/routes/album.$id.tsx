@@ -106,8 +106,9 @@ function AlbumPage() {
       const { data } = await supabase
         .from("album_logs")
         .select("id, rating, review, listened_at, user:profiles!album_logs_user_id_fkey(handle, name, avatar_url)")
-        .eq("album_key", id).not("review", "is", null)
-        .order("listened_at", { ascending: false }).limit(10);
+        .eq("album_key", id)
+        .or("rating.not.is.null,review.not.is.null")
+        .order("listened_at", { ascending: false }).limit(20);
       return data ?? [];
     },
   });
@@ -244,7 +245,7 @@ function AlbumPage() {
                     </Link>
                     {r.rating && <Stars value={r.rating} />}
                   </div>
-                  <p className="text-sm text-muted leading-relaxed">{r.review}</p>
+                  {r.review && <p className="text-sm text-muted leading-relaxed">{r.review}</p>}
                 </div>
               ))}
             </div>
