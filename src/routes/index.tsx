@@ -3,7 +3,7 @@ import { MobileShell } from "@/components/MobileShell";
 import { Stars } from "@/components/Stars";
 import { Avatar } from "@/components/Avatar";
 import { CommentsSheet } from "@/components/CommentsSheet";
-import { Heart, MessageCircle, TrendingUp, UserPlus, Loader2, Send, X } from "lucide-react";
+import { Bell, Heart, MessageCircle, TrendingUp, UserPlus, Loader2, Send, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useMyProfile } from "@/lib/auth";
@@ -25,7 +25,16 @@ function ExplorePage() {
   return (
     <MobileShell>
       <div className="px-5 pt-5">
-        <h1 className="text-3xl font-extrabold tracking-tighter mb-5">Explore</h1>
+        <div className="flex items-center justify-between mb-5">
+          <h1 className="text-3xl font-extrabold tracking-tighter">Explore</h1>
+          <Link
+            to="/activity"
+            aria-label="Activity"
+            className="size-10 -mr-2 grid place-items-center rounded-full text-muted hover:text-foreground hover:bg-secondary/60"
+          >
+            <Bell className="size-5" />
+          </Link>
+        </div>
         <div className="flex gap-1 p-1 bg-secondary/60 rounded-full mb-6">
           <TabBtn active={tab === "following"} onClick={() => setTab("following")}>Following</TabBtn>
           <TabBtn active={tab === "suggested"} onClick={() => setTab("suggested")}>Suggested</TabBtn>
