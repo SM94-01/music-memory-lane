@@ -161,6 +161,15 @@ function NotificationsList() {
           albumKey: s.album_key,
         })
       );
+      (unlocks.data ?? []).forEach((u: any) =>
+        list.push({
+          key: `id-${u.id}`,
+          kind: "identity",
+          created_at: u.unlocked_at,
+          actor: null,
+          identityKey: u.identity_key,
+        })
+      );
 
       list.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
       return list.slice(0, 100);
