@@ -181,36 +181,52 @@ function NotificationsList() {
 
   return (
     <ul className="px-5 space-y-3">
-      {items.map((n) => (
+      {items.map((n) => {
+        const identity = n.identityKey ? IDENTITIES.find((i) => i.key === n.identityKey) : null;
+        return (
         <li key={n.key} className="flex items-center gap-3 border-b border-border pb-3">
-          <Link to="/u/$handle" params={{ handle: n.actor?.handle ?? "" }}>
-            <Avatar handle={n.actor?.handle ?? ""} name={n.actor?.name} url={n.actor?.avatar_url ?? null} size={40} />
-          </Link>
+          {n.kind === "identity" ? (
+            <span className="size-10 rounded-full bg-accent/10 text-accent grid place-items-center text-lg shrink-0">{identity?.emoji ?? "✨"}</span>
+          ) : (
+            <Link to="/u/$handle" params={{ handle: n.actor?.handle ?? "" }}>
+              <Avatar handle={n.actor?.handle ?? ""} name={n.actor?.name} url={n.actor?.avatar_url ?? null} size={40} />
+            </Link>
+          )}
           <div className="flex-1 min-w-0 text-sm">
             <p className="leading-snug">
-              <Link to="/u/$handle" params={{ handle: n.actor?.handle ?? "" }} className="font-bold hover:text-accent">
-                {n.actor?.name ?? "Someone"}
-              </Link>{" "}
-              <span className="text-muted">
-                {n.kind === "follow" && "started following you"}
-                {n.kind === "like" && (
-                  <>liked your log{n.albumTitle ? <> of “<span className="text-foreground">{n.albumTitle}</span>”</> : null}</>
-                )}
-                {n.kind === "comment" && (
-                  <>commented{n.albumTitle ? <> on “<span className="text-foreground">{n.albumTitle}</span>”</> : null}
-                    {n.preview ? <>: <span className="italic">{n.preview.slice(0, 60)}</span></> : null}
-                  </>
-                )}
-                {n.kind === "share" && (
-                  <>shared “<span className="text-foreground">{n.albumTitle}</span>” with you</>
-                )}
-              </span>
+              {n.kind === "identity" ? (
+                <>
+                  <span className="font-bold">Identity unlocked</span>{" "}
+                  <span className="text-muted">— <span className="text-foreground">{identity?.label ?? n.identityKey}</span></span>
+                </>
+              ) : (
+                <>
+                  <Link to="/u/$handle" params={{ handle: n.actor?.handle ?? "" }} className="font-bold hover:text-accent">
+                    {n.actor?.name ?? "Someone"}
+                  </Link>{" "}
+                  <span className="text-muted">
+                    {n.kind === "follow" && "started following you"}
+                    {n.kind === "like" && (
+                      <>liked your log{n.albumTitle ? <> of “<span className="text-foreground">{n.albumTitle}</span>”</> : null}</>
+                    )}
+                    {n.kind === "comment" && (
+                      <>commented{n.albumTitle ? <> on “<span className="text-foreground">{n.albumTitle}</span>”</> : null}
+                        {n.preview ? <>: <span className="italic">{n.preview.slice(0, 60)}</span></> : null}
+                      </>
+                    )}
+                    {n.kind === "share" && (
+                      <>shared “<span className="text-foreground">{n.albumTitle}</span>” with you</>
+                    )}
+                  </span>
+                </>
+              )}
             </p>
             <p className="text-[10px] font-mono text-muted mt-0.5 flex items-center gap-1.5">
               {n.kind === "follow" && <UserPlus className="size-3" />}
               {n.kind === "like" && <Heart className="size-3" />}
               {n.kind === "comment" && <MessageCircle className="size-3" />}
               {n.kind === "share" && <Send className="size-3" />}
+              {n.kind === "identity" && <Sparkles className="size-3" />}
               {shortTime(n.created_at)}
             </p>
           </div>
@@ -224,7 +240,8 @@ function NotificationsList() {
             </Link>
           )}
         </li>
-      ))}
+        );
+      })}
     </ul>
   );
 }
