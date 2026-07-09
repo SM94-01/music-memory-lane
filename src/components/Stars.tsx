@@ -4,7 +4,7 @@ export function Stars({ value, size = "sm" }: { value: number; size?: "sm" | "md
   const pct = (v / 5) * 100;
   return (
     <span className={`relative inline-block leading-none tracking-tighter ${cls}`} aria-label={`${v} of 5 stars`}>
-      <span className="opacity-25">☆☆☆☆☆</span>
+      <span className="text-foreground opacity-20">★★★★★</span>
       <span
         className="absolute inset-0 overflow-hidden text-accent whitespace-nowrap"
         style={{ width: `${pct}%` }}
