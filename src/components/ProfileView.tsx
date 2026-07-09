@@ -97,28 +97,33 @@ export function ProfileView({ profile, fromProfile = false }: { profile: Profile
     }
   }
 
-  // Detect newly unlocked identities and toast
+  // Detect newly unlocked identities: persist to identity_unlocks, toast on new ones.
   useEffect(() => {
     if (!isMe || !logs || !watchlist) return;
-    const stats = computeTasteStats({ logs: logs as any, watchlistCount: watchlist.length });
-    const unlocked = IDENTITIES.filter((i) => i.unlocked(stats)).map((i) => i.key);
-    const storageKey = `trax:unlocked:${profile.id}`;
-    let previous: string[] = [];
-    try { previous = JSON.parse(localStorage.getItem(storageKey) || "[]"); } catch {}
-    if (previous.length === 0 && unlocked.length > 0) {
-      // First run — seed silently to avoid a wave of toasts
-      localStorage.setItem(storageKey, JSON.stringify(unlocked));
-      return;
-    }
-    const fresh = unlocked.filter((k) => !previous.includes(k));
-    if (fresh.length > 0) {
-      fresh.forEach((k) => {
-        const it = IDENTITIES.find((i) => i.key === k)!;
-        toast(`${it.emoji} Identity unlocked: ${it.label}`, { description: it.description });
-      });
-      localStorage.setItem(storageKey, JSON.stringify(unlocked));
-    }
-  }, [isMe, logs, watchlist, profile.id]);
+    (async () => {
+      const stats = computeTasteStats({ logs: logs as any, watchlistCount: watchlist.length });
+      const unlocked = IDENTITIES.filter((i) => i.unlocked(stats)).map((i) => i.key);
+      if (unlocked.length === 0) return;
+      const { data: existing } = await supabase
+        .from("identity_unlocks")
+        .select("identity_key")
+        .eq("user_id", profile.id);
+      const known = new Set((existing ?? []).map((r: any) => r.identity_key));
+      const fresh = unlocked.filter((k) => !known.has(k));
+      if (fresh.length === 0) return;
+      const rows = fresh.map((k) => ({ user_id: profile.id, identity_key: k }));
+      await supabase.from("identity_unlocks").insert(rows);
+      // If nothing was known before, this is a first-time backfill: seed silently.
+      const seeding = known.size === 0 && unlocked.length > 1;
+      if (!seeding) {
+        fresh.forEach((k) => {
+          const it = IDENTITIES.find((i) => i.key === k)!;
+          toast(`${it.emoji} Identity unlocked: ${it.label}`, { description: it.description });
+        });
+      }
+      qc.invalidateQueries({ queryKey: ["activityNotifs"] });
+    })();
+  }, [isMe, logs, watchlist, profile.id, qc]);
 
   const albumLinkState = fromProfile ? { from: "profile" as const } : undefined;
 
