@@ -4,7 +4,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useMyProfile } from "@/lib/auth";
 import { useQuery } from "@tanstack/react-query";
 import { Avatar } from "@/components/Avatar";
-import { ArrowLeft, Heart, MessageCircle, UserPlus, Send, Loader2 } from "lucide-react";
+import { ArrowLeft, Heart, MessageCircle, UserPlus, Send, Loader2, Sparkles } from "lucide-react";
+import { IDENTITIES } from "@/lib/identities";
 import { useState } from "react";
 import { formatDistanceToNowStrict } from "date-fns";
 
