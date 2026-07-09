@@ -53,13 +53,15 @@ function TabBtn({ active, onClick, children }: { active: boolean; onClick: () =>
 
 type NotifItem = {
   key: string;
-  kind: "follow" | "like" | "comment" | "share";
+  kind: "follow" | "like" | "comment" | "share" | "identity";
   created_at: string;
   actor: { handle: string; name: string; avatar_url: string | null } | null;
   albumTitle?: string;
   albumKey?: string;
   preview?: string;
+  identityKey?: string;
 };
+
 
 function shortTime(iso: string) {
   return formatDistanceToNowStrict(new Date(iso), { addSuffix: false })
