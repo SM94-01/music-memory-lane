@@ -28,7 +28,12 @@ export function EditProfileDialog({ profile, onClose }: { profile: Profile; onCl
     })();
   }, [profile.id]);
 
-  const items = useMemo(() => IDENTITIES.filter((i) => stats ? i.unlocked(stats) : i.key === "new-listener"), [stats]);
+  const unlockedCount = useMemo(() => IDENTITIES.filter((i) => stats ? i.unlocked(stats) : i.key === "new-listener").length, [stats]);
+  function isUnlocked(key: string) {
+    const it = IDENTITIES.find((i) => i.key === key);
+    if (!it) return false;
+    return stats ? it.unlocked(stats) : it.key === "new-listener";
+  }
 
   async function save() {
     setBusy(true); setErr(null);
