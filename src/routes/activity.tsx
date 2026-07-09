@@ -75,7 +75,7 @@ function NotificationsList() {
     enabled: !!me,
     queryFn: async (): Promise<NotifItem[]> => {
       const meId = me!.id;
-      const [follows, myLogs, shares] = await Promise.all([
+      const [follows, myLogs, shares, unlocks] = await Promise.all([
         supabase
           .from("follows")
           .select("created_at, actor:profiles!follows_follower_id_fkey(handle, name, avatar_url)")
@@ -91,6 +91,12 @@ function NotificationsList() {
           .select("id, created_at, album_key, title, actor:profiles!album_shares_from_user_id_fkey(handle, name, avatar_url)")
           .eq("to_user_id", meId)
           .order("created_at", { ascending: false })
+          .limit(50),
+        supabase
+          .from("identity_unlocks")
+          .select("id, identity_key, unlocked_at")
+          .eq("user_id", meId)
+          .order("unlocked_at", { ascending: false })
           .limit(50),
       ]);
 
