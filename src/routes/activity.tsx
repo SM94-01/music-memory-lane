@@ -4,7 +4,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useMyProfile } from "@/lib/auth";
 import { useQuery } from "@tanstack/react-query";
 import { Avatar } from "@/components/Avatar";
-import { ArrowLeft, Heart, MessageCircle, UserPlus, Send, Loader2 } from "lucide-react";
+import { ArrowLeft, Heart, MessageCircle, UserPlus, Send, Loader2, Sparkles } from "lucide-react";
+import { IDENTITIES } from "@/lib/identities";
 import { useState } from "react";
 import { formatDistanceToNowStrict } from "date-fns";
 
@@ -52,13 +53,15 @@ function TabBtn({ active, onClick, children }: { active: boolean; onClick: () =>
 
 type NotifItem = {
   key: string;
-  kind: "follow" | "like" | "comment" | "share";
+  kind: "follow" | "like" | "comment" | "share" | "identity";
   created_at: string;
   actor: { handle: string; name: string; avatar_url: string | null } | null;
   albumTitle?: string;
   albumKey?: string;
   preview?: string;
+  identityKey?: string;
 };
+
 
 function shortTime(iso: string) {
   return formatDistanceToNowStrict(new Date(iso), { addSuffix: false })
@@ -72,7 +75,7 @@ function NotificationsList() {
     enabled: !!me,
     queryFn: async (): Promise<NotifItem[]> => {
       const meId = me!.id;
-      const [follows, myLogs, shares] = await Promise.all([
+      const [follows, myLogs, shares, unlocks] = await Promise.all([
         supabase
           .from("follows")
           .select("created_at, actor:profiles!follows_follower_id_fkey(handle, name, avatar_url)")
@@ -88,6 +91,12 @@ function NotificationsList() {
           .select("id, created_at, album_key, title, actor:profiles!album_shares_from_user_id_fkey(handle, name, avatar_url)")
           .eq("to_user_id", meId)
           .order("created_at", { ascending: false })
+          .limit(50),
+        supabase
+          .from("identity_unlocks")
+          .select("id, identity_key, unlocked_at")
+          .eq("user_id", meId)
+          .order("unlocked_at", { ascending: false })
           .limit(50),
       ]);
 
@@ -152,6 +161,15 @@ function NotificationsList() {
           albumKey: s.album_key,
         })
       );
+      (unlocks.data ?? []).forEach((u: any) =>
+        list.push({
+          key: `id-${u.id}`,
+          kind: "identity",
+          created_at: u.unlocked_at,
+          actor: null,
+          identityKey: u.identity_key,
+        })
+      );
 
       list.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
       return list.slice(0, 100);
@@ -163,36 +181,52 @@ function NotificationsList() {
 
   return (
     <ul className="px-5 space-y-3">
-      {items.map((n) => (
+      {items.map((n) => {
+        const identity = n.identityKey ? IDENTITIES.find((i) => i.key === n.identityKey) : null;
+        return (
         <li key={n.key} className="flex items-center gap-3 border-b border-border pb-3">
-          <Link to="/u/$handle" params={{ handle: n.actor?.handle ?? "" }}>
-            <Avatar handle={n.actor?.handle ?? ""} name={n.actor?.name} url={n.actor?.avatar_url ?? null} size={40} />
-          </Link>
+          {n.kind === "identity" ? (
+            <span className="size-10 rounded-full bg-accent/10 text-accent grid place-items-center text-lg shrink-0">{identity?.emoji ?? "✨"}</span>
+          ) : (
+            <Link to="/u/$handle" params={{ handle: n.actor?.handle ?? "" }}>
+              <Avatar handle={n.actor?.handle ?? ""} name={n.actor?.name} url={n.actor?.avatar_url ?? null} size={40} />
+            </Link>
+          )}
           <div className="flex-1 min-w-0 text-sm">
             <p className="leading-snug">
-              <Link to="/u/$handle" params={{ handle: n.actor?.handle ?? "" }} className="font-bold hover:text-accent">
-                {n.actor?.name ?? "Someone"}
-              </Link>{" "}
-              <span className="text-muted">
-                {n.kind === "follow" && "started following you"}
-                {n.kind === "like" && (
-                  <>liked your log{n.albumTitle ? <> of “<span className="text-foreground">{n.albumTitle}</span>”</> : null}</>
-                )}
-                {n.kind === "comment" && (
-                  <>commented{n.albumTitle ? <> on “<span className="text-foreground">{n.albumTitle}</span>”</> : null}
-                    {n.preview ? <>: <span className="italic">{n.preview.slice(0, 60)}</span></> : null}
-                  </>
-                )}
-                {n.kind === "share" && (
-                  <>shared “<span className="text-foreground">{n.albumTitle}</span>” with you</>
-                )}
-              </span>
+              {n.kind === "identity" ? (
+                <>
+                  <span className="font-bold">Identity unlocked</span>{" "}
+                  <span className="text-muted">— <span className="text-foreground">{identity?.label ?? n.identityKey}</span></span>
+                </>
+              ) : (
+                <>
+                  <Link to="/u/$handle" params={{ handle: n.actor?.handle ?? "" }} className="font-bold hover:text-accent">
+                    {n.actor?.name ?? "Someone"}
+                  </Link>{" "}
+                  <span className="text-muted">
+                    {n.kind === "follow" && "started following you"}
+                    {n.kind === "like" && (
+                      <>liked your log{n.albumTitle ? <> of “<span className="text-foreground">{n.albumTitle}</span>”</> : null}</>
+                    )}
+                    {n.kind === "comment" && (
+                      <>commented{n.albumTitle ? <> on “<span className="text-foreground">{n.albumTitle}</span>”</> : null}
+                        {n.preview ? <>: <span className="italic">{n.preview.slice(0, 60)}</span></> : null}
+                      </>
+                    )}
+                    {n.kind === "share" && (
+                      <>shared “<span className="text-foreground">{n.albumTitle}</span>” with you</>
+                    )}
+                  </span>
+                </>
+              )}
             </p>
             <p className="text-[10px] font-mono text-muted mt-0.5 flex items-center gap-1.5">
               {n.kind === "follow" && <UserPlus className="size-3" />}
               {n.kind === "like" && <Heart className="size-3" />}
               {n.kind === "comment" && <MessageCircle className="size-3" />}
               {n.kind === "share" && <Send className="size-3" />}
+              {n.kind === "identity" && <Sparkles className="size-3" />}
               {shortTime(n.created_at)}
             </p>
           </div>
@@ -206,7 +240,8 @@ function NotificationsList() {
             </Link>
           )}
         </li>
-      ))}
+        );
+      })}
     </ul>
   );
 }

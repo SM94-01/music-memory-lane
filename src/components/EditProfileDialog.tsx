@@ -28,7 +28,12 @@ export function EditProfileDialog({ profile, onClose }: { profile: Profile; onCl
     })();
   }, [profile.id]);
 
-  const items = useMemo(() => IDENTITIES.filter((i) => stats ? i.unlocked(stats) : i.key === "new-listener"), [stats]);
+  const unlockedCount = useMemo(() => IDENTITIES.filter((i) => stats ? i.unlocked(stats) : i.key === "new-listener").length, [stats]);
+  function isUnlocked(key: string) {
+    const it = IDENTITIES.find((i) => i.key === key);
+    if (!it) return false;
+    return stats ? it.unlocked(stats) : it.key === "new-listener";
+  }
 
   async function save() {
     setBusy(true); setErr(null);
@@ -63,24 +68,35 @@ export function EditProfileDialog({ profile, onClose }: { profile: Profile; onCl
 
           <div>
             <span className="text-[9px] font-mono uppercase tracking-widest text-muted mb-1.5 block">
-              Identity {stats && <span className="text-accent ml-1">— {items.length}/{IDENTITIES.length} unlocked</span>}
+              Identity {stats && <span className="text-accent ml-1">— {unlockedCount}/{IDENTITIES.length} unlocked</span>}
             </span>
-            <div className="relative">
-              <select
-                value={identity}
-                onChange={(e) => setIdentity(e.target.value)}
-                className={`${inp} appearance-none pr-8`}
-              >
-                {items.map((i) => (
-                  <option key={i.key} value={i.key}>
-                    {i.emoji} {i.label} — {i.description}
-                  </option>
-                ))}
-              </select>
-              <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-muted">▾</span>
+            <div className="max-h-64 overflow-y-auto rounded-sm border border-border bg-secondary/20 divide-y divide-border">
+              {IDENTITIES.map((i) => {
+                const unlocked = isUnlocked(i.key);
+                const selected = identity === i.key;
+                return (
+                  <button
+                    key={i.key}
+                    type="button"
+                    disabled={!unlocked}
+                    onClick={() => unlocked && setIdentity(i.key)}
+                    className={`w-full text-left flex items-start gap-3 px-3 py-2.5 transition-colors ${
+                      selected ? "bg-accent/10" : ""
+                    } ${unlocked ? "hover:bg-accent/5 cursor-pointer" : "opacity-40 cursor-not-allowed"}`}
+                  >
+                    <span className="text-lg leading-none pt-0.5">{unlocked ? i.emoji : "🔒"}</span>
+                    <span className="flex-1 min-w-0">
+                      <span className="block text-sm font-bold">{i.label}</span>
+                      <span className="block text-[11px] text-muted">{i.description}</span>
+                    </span>
+                    {selected && <span className="text-[9px] font-mono uppercase tracking-widest text-accent shrink-0 pt-1">Active</span>}
+                  </button>
+                );
+              })}
             </div>
             <p className="mt-1.5 text-[10px] text-muted">Unlock more identities by logging albums, writing reviews, and building your list.</p>
           </div>
+
 
 
           <Field label="Short bio"><input maxLength={80} value={bioShort} onChange={(e) => setBioShort(e.target.value)} className={inp} /></Field>
