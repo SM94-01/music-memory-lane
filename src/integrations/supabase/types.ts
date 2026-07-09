@@ -226,6 +226,35 @@ export type Database = {
           },
         ]
       }
+      identity_unlocks: {
+        Row: {
+          id: string
+          identity_key: string
+          unlocked_at: string
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          identity_key: string
+          unlocked_at?: string
+          user_id: string
+        }
+        Update: {
+          id?: string
+          identity_key?: string
+          unlocked_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "identity_unlocks_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       likes: {
         Row: {
           created_at: string
