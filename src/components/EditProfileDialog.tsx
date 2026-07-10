@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 import type { Profile } from "@/lib/auth";
-import { X, Loader2 } from "lucide-react";
+import { ChevronDown, Loader2, X } from "lucide-react";
 import { IDENTITIES, computeTasteStats, identityByKey } from "@/lib/identities";
 
 export function EditProfileDialog({ profile, onClose }: { profile: Profile; onClose: () => void }) {
@@ -15,24 +15,30 @@ export function EditProfileDialog({ profile, onClose }: { profile: Profile; onCl
   const [identity, setIdentity] = useState<string>(initialIdentity);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
+  const [identityOpen, setIdentityOpen] = useState(false);
 
   // load stats to know which identities are unlocked
   const [stats, setStats] = useState<ReturnType<typeof computeTasteStats> | null>(null);
+  const [storedUnlocked, setStoredUnlocked] = useState<Set<string>>(new Set(["new-listener"]));
   useEffect(() => {
     (async () => {
-      const [{ data: logs }, { count: wl }] = await Promise.all([
+      const [{ data: logs }, { count: wl }, { data: unlocks }] = await Promise.all([
         supabase.from("album_logs").select("artist, genre, review, year").eq("user_id", profile.id),
         supabase.from("watchlist").select("*", { count: "exact", head: true }).eq("user_id", profile.id),
+        supabase.from("identity_unlocks").select("identity_key").eq("user_id", profile.id),
       ]);
       setStats(computeTasteStats({ logs: (logs ?? []) as any, watchlistCount: wl ?? 0 }));
+      setStoredUnlocked(new Set(["new-listener", ...((unlocks ?? []) as any[]).map((u) => u.identity_key)]));
     })();
   }, [profile.id]);
 
-  const unlockedCount = useMemo(() => IDENTITIES.filter((i) => stats ? i.unlocked(stats) : i.key === "new-listener").length, [stats]);
+  const unlockedIdentities = useMemo(() => IDENTITIES.filter((i) => isUnlocked(i.key)), [stats, storedUnlocked]);
+  const selectedIdentity = identityByKey(identity) ?? identityByKey(profile.identity) ?? IDENTITIES[0];
+  const unlockedCount = unlockedIdentities.length;
   function isUnlocked(key: string) {
     const it = IDENTITIES.find((i) => i.key === key);
     if (!it) return false;
-    return stats ? it.unlocked(stats) : it.key === "new-listener";
+    return storedUnlocked.has(key) || (stats ? it.unlocked(stats) : it.key === "new-listener");
   }
 
   async function save() {
@@ -70,11 +76,74 @@ export function EditProfileDialog({ profile, onClose }: { profile: Profile; onCl
             <span className="text-[9px] font-mono uppercase tracking-widest text-muted mb-1.5 block">
               Identity {stats && <span className="text-accent ml-1">— {unlockedCount}/{IDENTITIES.length} unlocked</span>}
             </span>
-            <div className="max-h-64 overflow-y-auto rounded-sm border border-border bg-secondary/20 divide-y divide-border">
-              {IDENTITIES.map((i) => {
-                const unlocked = isUnlocked(i.key);
-                const selected = identity === i.key;
-                return (
+            <div className="relative">
+              <button
+                type="button"
+                onClick={() => setIdentityOpen((v) => !v)}
+                className="w-full flex items-center gap-3 rounded-sm border border-border bg-secondary/40 px-3 py-2.5 text-left"
+              >
+                <span className="text-lg leading-none">{selectedIdentity.emoji}</span>
+                <span className="flex-1 min-w-0">
+                  <span className="block text-sm font-bold">{selectedIdentity.label}</span>
+                  <span className="block text-[11px] text-muted truncate">{selectedIdentity.description}</span>
+                </span>
+                <ChevronDown className={`size-4 text-muted transition-transform ${identityOpen ? "rotate-180" : ""}`} />
+              </button>
+
+              {identityOpen && (
+                <div className="absolute left-0 right-0 top-[calc(100%+0.35rem)] z-10 max-h-64 overflow-y-auto rounded-sm border border-border bg-background shadow-lg divide-y divide-border">
+                  {unlockedIdentities.map((i) => {
+                    const selected = identity === i.key;
+                    return (
+                      <button
+                        key={i.key}
+                        type="button"
+                        onClick={() => { setIdentity(i.key); setIdentityOpen(false); }}
+                        className={`w-full text-left flex items-start gap-3 px-3 py-2.5 transition-colors ${
+                          selected ? "bg-accent/10" : "hover:bg-accent/5"
+                        }`}
+                      >
+                        <span className="text-lg leading-none pt-0.5">{i.emoji}</span>
+                        <span className="flex-1 min-w-0">
+                          <span className="block text-sm font-bold">{i.label}</span>
+                          <span className="block text-[11px] text-muted">{i.description}</span>
+                        </span>
+                        {selected && <span className="text-[9px] font-mono uppercase tracking-widest text-accent shrink-0 pt-1">Active</span>}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+            <p className="mt-1.5 text-[10px] text-muted">Unlock more identities by logging albums, writing reviews, and building your list.</p>
+          </div>
+
+
+
+          <Field label="Short bio"><input maxLength={80} value={bioShort} onChange={(e) => setBioShort(e.target.value)} className={inp} /></Field>
+          <Field label="Long bio">
+            <textarea value={bioLong} onChange={(e) => setBioLong(e.target.value)} rows={4} className={`${inp} resize-none`} />
+          </Field>
+          {err && <p className="text-xs text-destructive">{err}</p>}
+          <button onClick={save} disabled={busy} className="w-full bg-accent text-accent-foreground py-3 rounded-full text-xs font-bold uppercase tracking-widest flex items-center justify-center gap-2 disabled:opacity-50">
+            {busy && <Loader2 className="size-4 animate-spin" />} Save changes
+          </button>
+        </div>
+      </div>
+      </div>
+    </div>
+  );
+}
+
+const inp = "w-full bg-secondary/40 border border-border rounded-sm px-3 py-2.5 text-sm outline-none focus:border-accent";
+function Field({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <label className="block">
+      <span className="text-[9px] font-mono uppercase tracking-widest text-muted mb-1.5 block">{label}</span>
+      {children}
+    </label>
+  );
+}
                   <button
                     key={i.key}
                     type="button"
