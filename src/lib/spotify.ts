@@ -28,17 +28,17 @@ async function invokeSpotify<T>(body: Record<string, unknown>): Promise<T> {
 }
 
 export async function searchSpotifyAlbums(query: string) {
-  const result = await invokeSpotify<{ albums: SpotifyAlbum[] }>({ action: "searchAlbums", query, limit: 20 });
+  const result = await invokeSpotify<{ albums: SpotifyAlbum[] }>({ action: "searchAlbums", query, limit: 10 });
   return result.albums;
 }
 
 export async function searchSpotifyArtists(query: string) {
-  const result = await invokeSpotify<{ artists: SpotifyArtist[] }>({ action: "searchArtists", query, limit: 20 });
+  const result = await invokeSpotify<{ artists: SpotifyArtist[] }>({ action: "searchArtists", query, limit: 10 });
   return result.artists;
 }
 
 export async function searchSpotifyByGenre(kind: "albums" | "artists", genre: string) {
-  const result = await invokeSpotify<{ albums?: SpotifyAlbum[]; artists?: SpotifyArtist[] }>({ action: "genre", kind, genre, limit: 20 });
+  const result = await invokeSpotify<{ albums?: SpotifyAlbum[]; artists?: SpotifyArtist[] }>({ action: "genre", kind, genre, limit: 10 });
   return kind === "albums" ? result.albums ?? [] : result.artists ?? [];
 }
 
