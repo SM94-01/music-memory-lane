@@ -94,23 +94,32 @@ Deno.serve(async (req) => {
     if (action === "searchAlbums") {
       const query = String(body.query ?? "").trim();
       if (query.length < 2) return json(400, { error: "Query is too short" });
-      const data = await spotify<any>(`/search?${new URLSearchParams({ q: query, type: "album", limit: String(limit) })}`);
+      const data = await spotify<any>(
+        `/search?${new URLSearchParams({ q: query, type: "album", limit: String(limit) })}`,
+      );
       return json(200, { albums: (data.albums?.items ?? []).map((a: any) => albumFromItem(a)) });
     }
 
     if (action === "searchArtists") {
       const query = String(body.query ?? "").trim();
       if (query.length < 2) return json(400, { error: "Query is too short" });
-      const data = await spotify<any>(`/search?${new URLSearchParams({ q: query, type: "artist", limit: String(limit) })}`);
+      const data = await spotify<any>(
+        `/search?${new URLSearchParams({ q: query, type: "artist", limit: String(limit) })}`,
+      );
       return json(200, { artists: (data.artists?.items ?? []).map((a: any) => artistFromItem(a)) });
     }
 
     if (action === "genre") {
-      const genre = String(body.genre ?? "").trim().toLowerCase();
+      const genre = String(body.genre ?? "")
+        .trim()
+        .toLowerCase();
       const kind = body.kind === "artists" ? "artist" : "album";
       if (!genre) return json(400, { error: "Genre is required" });
-      const data = await spotify<any>(`/search?${new URLSearchParams({ q: `genre:${genre}`, type: kind, limit: String(limit) })}`);
-      if (kind === "artist") return json(200, { artists: (data.artists?.items ?? []).map((a: any) => artistFromItem(a)) });
+      const data = await spotify<any>(
+        `/search?${new URLSearchParams({ q: `genre:${genre}`, type: kind, limit: String(limit) })}`,
+      );
+      if (kind === "artist")
+        return json(200, { artists: (data.artists?.items ?? []).map((a: any) => artistFromItem(a)) });
       return json(200, { albums: (data.albums?.items ?? []).map((a: any) => albumFromItem(a, genre)) });
     }
 
@@ -132,7 +141,7 @@ Deno.serve(async (req) => {
       if (!id) return json(400, { error: "Artist id is required" });
       const [artist, releases] = await Promise.all([
         spotify<any>(`/artists/${encodeURIComponent(id)}`),
-        spotify<any>(`/artists/${encodeURIComponent(id)}/albums?${new URLSearchParams({ include_groups: "album", limit: "30" })}`),
+        spotify<any>(`/artists/${encodeURIComponent(id)}/albums?${new URLSearchParams({ include_groups: "album" })}`),
       ]);
       return json(200, { artist: artistFromItem(artist, releases.items ?? []) });
     }
