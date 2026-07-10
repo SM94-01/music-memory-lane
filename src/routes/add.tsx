@@ -95,7 +95,7 @@ function AddPage() {
 
 function rankAlbums(items: SpotifyAlbum[], genres: string[], artists: string[]) {
   if (!genres.length && !artists.length) return items;
-  const score = (it: ReleaseGroup) => {
+  const score = (it: SpotifyAlbum) => {
     let s = 0;
     if (it.genre && genres.includes(it.genre.toLowerCase())) s += 2;
     const artist = it.artist.toLowerCase();
@@ -106,8 +106,8 @@ function rankAlbums(items: SpotifyAlbum[], genres: string[], artists: string[]) 
 }
 function rankArtists(items: SpotifyArtist[], genres: string[]) {
   if (!genres.length) return items;
-  const score = (it: Artist) => {
-    const tags = (it.genres ?? []).map((t) => t.toLowerCase());
+  const score = (it: SpotifyArtist) => {
+    const tags = (it.genres ?? []).map((t: string) => t.toLowerCase());
     return tags.some((t) => genres.includes(t)) ? 2 : 0;
   };
   return [...items].sort((a, b) => score(b) - score(a));

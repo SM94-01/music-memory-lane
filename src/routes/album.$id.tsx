@@ -10,6 +10,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { getMockAlbum, mockCoverFor } from "@/data/mock";
 import { AlbumCover } from "@/components/AlbumCover";
 import { ShareAlbumDialog } from "@/components/ShareAlbumDialog";
+import { getSpotifyAlbum } from "@/lib/spotify";
 
 type AlbumInfo = { title: string; artist: string; year: number | null; cover: string | null; genre: string | null };
 
@@ -53,7 +54,7 @@ function AlbumPage() {
     qc.invalidateQueries({ queryKey: ["watchlist"] });
   }
 
-  // Resolve album info: mock first, then DB log, then MusicBrainz
+  // Resolve album info: mock first, then DB log, then Spotify
   useEffect(() => {
     (async () => {
       const mock = getMockAlbum(id);
@@ -68,19 +69,10 @@ function AlbumPage() {
         setInfo({ title: anyLog.title, artist: anyLog.artist, year: anyLog.year, cover: anyLog.cover_url, genre: anyLog.genre });
         setLoading(false); return;
       }
-      // Try MusicBrainz
+      // Try Spotify
       try {
-        const r = await fetch(`https://musicbrainz.org/ws/2/release-group/${id}?fmt=json&inc=artist-credits+tags`, { headers: { Accept: "application/json" } });
-        if (r.ok) {
-          const j = await r.json();
-          setInfo({
-            title: j.title,
-            artist: j["artist-credit"]?.map((c: any) => c.name).join(", ") ?? "Unknown",
-            year: j["first-release-date"]?.slice(0, 4) ? Number(j["first-release-date"].slice(0, 4)) : null,
-            cover: `https://coverartarchive.org/release-group/${id}/front-250`,
-            genre: j.tags?.[0]?.name ?? null,
-          });
-        }
+        const album = await getSpotifyAlbum(id);
+        setInfo({ title: album.title, artist: album.artist, year: album.year, cover: album.cover, genre: album.genre });
       } catch {}
       setLoading(false);
     })();
