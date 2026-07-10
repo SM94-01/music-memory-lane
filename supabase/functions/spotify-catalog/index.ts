@@ -54,7 +54,7 @@ async function spotify<T>(path: string): Promise<T> {
   const res = await fetch(`${SPOTIFY_API}${path}`, {
     headers: { Authorization: `Bearer ${token}`, Accept: "application/json" },
   });
-  if (!res.ok) throw new Error(`Spotify request failed: ${res.status}`);
+  if (!res.ok) throw new Error(`Spotify request failed: ${res.status} ${await res.text()}`);
   return await res.json();
 }
 
@@ -109,7 +109,7 @@ Deno.serve(async (req) => {
       const genre = String(body.genre ?? "").trim().toLowerCase();
       const kind = body.kind === "artists" ? "artist" : "album";
       if (!genre) return json(400, { error: "Genre is required" });
-      const data = await spotify<any>(`/search?${new URLSearchParams({ q: `genre:"${genre}"`, type: kind, limit: String(limit) })}`);
+      const data = await spotify<any>(`/search?${new URLSearchParams({ q: `genre:${genre}`, type: kind, limit: String(limit) })}`);
       if (kind === "artist") return json(200, { artists: (data.artists?.items ?? []).map((a: any) => artistFromItem(a)) });
       return json(200, { albums: (data.albums?.items ?? []).map((a: any) => albumFromItem(a, genre)) });
     }
