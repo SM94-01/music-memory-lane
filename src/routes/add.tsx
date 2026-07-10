@@ -8,22 +8,21 @@ import { useQuery } from "@tanstack/react-query";
 import { useMyProfile } from "@/lib/auth";
 import { fetchTasteFingerprint } from "@/lib/taste";
 import { AlbumCover } from "@/components/AlbumCover";
+import { searchSpotifyAlbums, searchSpotifyArtists, searchSpotifyByGenre, type SpotifyAlbum, type SpotifyArtist } from "@/lib/spotify";
 
 export const Route = createFileRoute("/add")({
   head: () => ({ meta: [{ title: "Add music — TraX" }] }),
   component: AddPage,
 });
 
-type ReleaseGroup = { id: string; title: string; "first-release-date"?: string; "primary-type"?: string; "artist-credit"?: { name: string }[]; tags?: { name: string }[] };
-type Artist = { id: string; name: string; country?: string; disambiguation?: string; tags?: { name: string }[] };
 type Mode = "albums" | "artists" | "genres";
 
 function AddPage() {
   const [mode, setMode] = useState<Mode>("albums");
   const [q, setQ] = useState("");
   const [loading, setLoading] = useState(false);
-  const [albums, setAlbums] = useState<ReleaseGroup[]>([]);
-  const [artists, setArtists] = useState<Artist[]>([]);
+  const [albums, setAlbums] = useState<SpotifyAlbum[]>([]);
+  const [artists, setArtists] = useState<SpotifyArtist[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [selectedGenre, setSelectedGenre] = useState<string | null>(null);
   const abortRef = useRef<AbortController | null>(null);
@@ -47,13 +46,9 @@ function AddPage() {
     const t = setTimeout(async () => {
       setLoading(true); setError(null);
       try {
-        const path = mode === "albums" ? "release-group" : "artist";
-        const r = await fetch(`https://musicbrainz.org/ws/2/${path}/?query=${encodeURIComponent(q)}&fmt=json&limit=20`, { signal: ctrl.signal, headers: { Accept: "application/json" } });
-        if (!r.ok) throw new Error("Search failed");
-        const j = await r.json();
-        if (mode === "albums") setAlbums(rankAlbums(j["release-groups"] ?? [], myGenres, myArtists));
-        else setArtists(rankArtists(j.artists ?? [], myGenres));
-      } catch (e) { if ((e as Error).name !== "AbortError") setError("Couldn't reach MusicBrainz."); }
+        if (mode === "albums") setAlbums(rankAlbums(await searchSpotifyAlbums(q), myGenres, myArtists));
+        else setArtists(rankArtists(await searchSpotifyArtists(q), myGenres));
+      } catch (e) { if ((e as Error).name !== "AbortError") setError("Couldn't reach Spotify."); }
       finally { setLoading(false); }
     }, 350);
     return () => { clearTimeout(t); ctrl.abort(); };
@@ -63,7 +58,7 @@ function AddPage() {
     <MobileShell>
       <div className="px-5 pt-5">
         <h1 className="text-3xl font-extrabold tracking-tighter mb-1">Add music</h1>
-        <p className="text-sm text-muted mb-5">Search the open MusicBrainz catalog.</p>
+        <p className="text-sm text-muted mb-5">Search Spotify's album catalog.</p>
 
         {mode !== "genres" || selectedGenre === null ? (
           <label className="flex items-center gap-3 border border-border rounded-full px-4 py-3 bg-secondary/40 focus-within:border-accent">
@@ -98,22 +93,21 @@ function AddPage() {
   );
 }
 
-function rankAlbums(items: ReleaseGroup[], genres: string[], artists: string[]) {
+function rankAlbums(items: SpotifyAlbum[], genres: string[], artists: string[]) {
   if (!genres.length && !artists.length) return items;
   const score = (it: ReleaseGroup) => {
     let s = 0;
-    const tags = (it.tags ?? []).map((t) => t.name.toLowerCase());
-    if (tags.some((t) => genres.includes(t))) s += 2;
-    const artist = (it["artist-credit"]?.[0]?.name ?? "").toLowerCase();
+    if (it.genre && genres.includes(it.genre.toLowerCase())) s += 2;
+    const artist = it.artist.toLowerCase();
     if (artists.includes(artist)) s += 3;
     return s;
   };
   return [...items].sort((a, b) => score(b) - score(a));
 }
-function rankArtists(items: Artist[], genres: string[]) {
+function rankArtists(items: SpotifyArtist[], genres: string[]) {
   if (!genres.length) return items;
   const score = (it: Artist) => {
-    const tags = (it.tags ?? []).map((t) => t.name.toLowerCase());
+    const tags = (it.genres ?? []).map((t) => t.toLowerCase());
     return tags.some((t) => genres.includes(t)) ? 2 : 0;
   };
   return [...items].sort((a, b) => score(b) - score(a));
@@ -125,12 +119,7 @@ function SuggestedFeed({ kind, genres }: { kind: "albums" | "artists"; genres: s
     queryKey: ["suggested-mb", kind, genres.join("|")],
     enabled,
     queryFn: async () => {
-      const tagQuery = genres.slice(0, 3).map((g) => `tag:"${g}"`).join(" OR ");
-      const path = kind === "albums" ? "release-group" : "artist";
-      const r = await fetch(`https://musicbrainz.org/ws/2/${path}/?query=${encodeURIComponent(tagQuery)}&fmt=json&limit=20`, { headers: { Accept: "application/json" } });
-      const j = await r.json();
-      if (kind === "albums") return (j["release-groups"] ?? []) as ReleaseGroup[];
-      return (j.artists ?? []) as Artist[];
+      return searchSpotifyByGenre(kind, genres[0]);
     },
   });
 
@@ -143,27 +132,26 @@ function SuggestedFeed({ kind, genres }: { kind: "albums" | "artists"; genres: s
   }
   if (isLoading) return <div className="py-6 flex justify-center"><Loader2 className="size-5 animate-spin text-muted" /></div>;
   return kind === "albums"
-    ? <AlbumResults items={(data as ReleaseGroup[]) ?? []} empty={false} />
-    : <ArtistResults items={(data as Artist[]) ?? []} empty={false} />;
+    ? <AlbumResults items={(data as SpotifyAlbum[]) ?? []} empty={false} />
+    : <ArtistResults items={(data as SpotifyArtist[]) ?? []} empty={false} />;
 }
 
-function AlbumResults({ items, empty }: { items: ReleaseGroup[]; empty: boolean }) {
+function AlbumResults({ items, empty }: { items: SpotifyAlbum[]; empty: boolean }) {
   return (
     <ul className="divide-y divide-border">
       {items.map((a) => {
-        const artist = a["artist-credit"]?.map((c) => c.name).join(", ") ?? "Unknown";
-        const year = a["first-release-date"]?.slice(0, 4);
-        const cover = `https://coverartarchive.org/release-group/${a.id}/front-250`;
+        const year = a.year ? String(a.year) : null;
+        const cover = a.cover;
         return (
           <li key={a.id}>
             <Link to="/album/$id" params={{ id: a.id }} className="py-3 flex items-center gap-4">
               <div className="size-14 shrink-0 rounded-xs overflow-hidden bg-secondary [container-type:inline-size]">
-                <AlbumCover src={cover} title={a.title} artist={artist} className="size-full" />
+                <AlbumCover src={cover} title={a.title} artist={a.artist} className="size-full" />
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-bold truncate">{a.title}</p>
                 <p className="text-[11px] text-muted truncate">
-                  {artist}{year ? ` • ${year}` : ""}{a["primary-type"] ? ` • ${a["primary-type"]}` : ""}
+                  {a.artist}{year ? ` • ${year}` : ""}{a.type ? ` • ${a.type}` : ""}
                 </p>
               </div>
               <span className="text-[10px] font-mono uppercase tracking-widest text-accent">Open →</span>
@@ -176,16 +164,16 @@ function AlbumResults({ items, empty }: { items: ReleaseGroup[]; empty: boolean 
   );
 }
 
-function ArtistResults({ items, empty }: { items: Artist[]; empty: boolean }) {
+function ArtistResults({ items, empty }: { items: SpotifyArtist[]; empty: boolean }) {
   return (
     <ul className="divide-y divide-border">
       {items.map((a) => (
         <li key={a.id}>
           <Link to="/artist/$id" params={{ id: a.id }} className="py-3 flex items-center gap-4">
-            <Avatar handle={a.id} name={a.name} size={56} />
+            {a.image ? <img src={a.image} alt={a.name} loading="lazy" className="size-14 rounded-full object-cover" /> : <Avatar handle={a.id} name={a.name} size={56} />}
             <div className="flex-1 min-w-0">
               <p className="text-sm font-bold truncate">{a.name}</p>
-              <p className="text-[11px] text-muted truncate">{a.disambiguation || a.country || "Artist"}</p>
+              <p className="text-[11px] text-muted truncate">{a.genres?.slice(0, 2).join(", ") || "Artist"}</p>
             </div>
             <span className="text-[10px] font-mono uppercase tracking-widest text-accent">Open →</span>
           </Link>
@@ -222,19 +210,18 @@ function GenresList({ query, onPick, topGenres }: { query: string; onPick: (g: s
 }
 
 function GenreView({ genre, onBack }: { genre: string; onBack: () => void }) {
-  const [albums, setAlbums] = useState<ReleaseGroup[]>([]);
-  const [artists, setArtists] = useState<Artist[]>([]);
+  const [albums, setAlbums] = useState<SpotifyAlbum[]>([]);
+  const [artists, setArtists] = useState<SpotifyArtist[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     setLoading(true);
-    const tag = encodeURIComponent(genre.toLowerCase());
     Promise.all([
-      fetch(`https://musicbrainz.org/ws/2/release-group/?query=tag:${tag}&fmt=json&limit=12`, { headers: { Accept: "application/json" } }).then((r) => r.json()),
-      fetch(`https://musicbrainz.org/ws/2/artist/?query=tag:${tag}&fmt=json&limit=8`, { headers: { Accept: "application/json" } }).then((r) => r.json()),
+      searchSpotifyByGenre("albums", genre),
+      searchSpotifyByGenre("artists", genre),
     ]).then(([rg, ar]) => {
-      setAlbums(rg["release-groups"] ?? []);
-      setArtists(ar.artists ?? []);
+      setAlbums(rg as SpotifyAlbum[]);
+      setArtists(ar as SpotifyArtist[]);
       setLoading(false);
     }).catch(() => setLoading(false));
   }, [genre]);
@@ -254,7 +241,7 @@ function GenreView({ genre, onBack }: { genre: string; onBack: () => void }) {
             {artists.slice(0, 6).map((a) => (
               <li key={a.id}>
                 <Link to="/artist/$id" params={{ id: a.id }} className="py-2.5 flex items-center gap-3">
-                  <Avatar handle={a.id} name={a.name} size={36} />
+                  {a.image ? <img src={a.image} alt={a.name} loading="lazy" className="size-9 rounded-full object-cover" /> : <Avatar handle={a.id} name={a.name} size={36} />}
                   <span className="text-sm font-bold flex-1 truncate">{a.name}</span>
                   <span className="text-[10px] font-mono text-muted">→</span>
                 </Link>
@@ -265,15 +252,13 @@ function GenreView({ genre, onBack }: { genre: string; onBack: () => void }) {
           <h3 className="text-[10px] font-mono uppercase tracking-widest text-accent mb-3">Top albums</h3>
           <div className="grid grid-cols-2 gap-3">
             {albums.map((a) => {
-              const cover = `https://coverartarchive.org/release-group/${a.id}/front-250`;
-              const artist = a["artist-credit"]?.map((c) => c.name).join(", ") ?? "";
               return (
                 <Link to="/album/$id" params={{ id: a.id }} key={a.id}>
                   <div className="aspect-square w-full rounded-xs overflow-hidden bg-secondary [container-type:inline-size]">
-                    <AlbumCover src={cover} title={a.title} artist={artist} className="size-full" />
+                    <AlbumCover src={a.cover} title={a.title} artist={a.artist} className="size-full" />
                   </div>
                   <p className="text-xs font-bold mt-2 truncate">{a.title}</p>
-                  <p className="text-[10px] text-muted truncate">{artist}</p>
+                  <p className="text-[10px] text-muted truncate">{a.artist}</p>
                 </Link>
               );
             })}
