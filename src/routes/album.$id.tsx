@@ -286,6 +286,49 @@ function AlbumPage() {
         </section>
       </div>
       {shareOpen && <ShareAlbumDialog albumKey={id} album={info} onClose={() => setShareOpen(false)} />}
+      {pickerOpen && info.tracks && (
+        <div className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm flex items-end sm:items-center justify-center p-4" onClick={() => setPickerOpen(false)}>
+          <div className="w-full max-w-md bg-background border border-border rounded-sm max-h-[80vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between px-4 py-3 border-b border-border">
+              <h3 className="text-sm font-bold">Pick the best track</h3>
+              <button onClick={() => setPickerOpen(false)} className="text-muted hover:text-foreground"><X className="size-4" /></button>
+            </div>
+            <ul className="overflow-y-auto divide-y divide-border">
+              {bestTrack && (
+                <li>
+                  <button onClick={() => { setBestTrack(null); setPickerOpen(false); }} className="w-full py-3 px-4 text-left text-xs font-mono uppercase tracking-widest text-muted hover:text-destructive">
+                    Clear selection
+                  </button>
+                </li>
+              )}
+              {info.tracks.map((t) => {
+                const isBest = bestTrack === t.name;
+                return (
+                  <li key={t.id}>
+                    <button
+                      onClick={() => { setBestTrack(t.name); setPickerOpen(false); }}
+                      className={`w-full py-3 px-4 flex items-center gap-3 text-left ${isBest ? "bg-accent/10" : "hover:bg-secondary/40"}`}
+                    >
+                      <span className="text-[10px] font-mono text-muted w-5 text-right">{t.track_number ?? "•"}</span>
+                      <span className={`text-sm flex-1 truncate ${isBest ? "font-bold text-accent" : ""}`}>{t.name}</span>
+                      {isBest && <Check className="size-4 text-accent" />}
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
+            <p className="text-[10px] text-muted px-4 py-2 border-t border-border">Remember to press "Log listen" / "Update log" to save.</p>
+          </div>
+        </div>
+      )}
     </MobileShell>
   );
+}
+
+function formatDuration(ms: number | null | undefined) {
+  if (!ms) return "";
+  const total = Math.round(ms / 1000);
+  const m = Math.floor(total / 60);
+  const s = total % 60;
+  return `${m}:${s.toString().padStart(2, "0")}`;
 }
