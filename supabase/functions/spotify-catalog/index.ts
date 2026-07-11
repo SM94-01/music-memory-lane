@@ -59,6 +59,12 @@ async function spotify<T>(path: string): Promise<T> {
 }
 
 function albumFromItem(item: any, genre: string | null = null) {
+  const tracks = (item.tracks?.items ?? []).map((t: any) => ({
+    id: t.id,
+    name: t.name,
+    track_number: t.track_number ?? null,
+    duration_ms: t.duration_ms ?? null,
+  }));
   return {
     id: item.id,
     title: item.name,
@@ -67,6 +73,7 @@ function albumFromItem(item: any, genre: string | null = null) {
     cover: largestImage(item.images),
     genre,
     type: item.album_type ?? "album",
+    tracks: tracks.length ? tracks : undefined,
   };
 }
 
