@@ -236,6 +236,35 @@ function AlbumPage() {
             <Send className="size-4" /> Share with a friend
           </button>
 
+          {info.tracks && info.tracks.length > 0 && (
+            <button
+              onClick={() => setPickerOpen(true)}
+              className="mt-3 w-full py-3 font-bold text-sm rounded-sm border border-border text-muted hover:text-accent hover:border-accent flex items-center justify-center gap-2"
+            >
+              <Music2 className="size-4" />
+              {bestTrack ? `Best track: ${bestTrack}` : "Pick best track (optional)"}
+            </button>
+          )}
+
+          {info.tracks && info.tracks.length > 0 && (
+            <div className="mt-10">
+              <h2 className="text-xs font-mono uppercase tracking-[0.2em] text-accent mb-4">Tracklist</h2>
+              <ul className="divide-y divide-border">
+                {info.tracks.map((t) => {
+                  const isBest = bestTrack === t.name;
+                  return (
+                    <li key={t.id} className="py-2.5 flex items-center gap-3">
+                      <span className="text-[10px] font-mono text-muted w-5 text-right">{t.track_number ?? "•"}</span>
+                      <span className={`text-sm flex-1 truncate ${isBest ? "font-bold text-accent" : ""}`}>{t.name}</span>
+                      <span className="text-[10px] font-mono text-muted">{formatDuration(t.duration_ms)}</span>
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
+          )}
+
+
           <div className="mt-10">
             <h2 className="text-xs font-mono uppercase tracking-[0.2em] text-accent mb-4">Community reviews</h2>
             <div className="space-y-6">
