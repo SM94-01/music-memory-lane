@@ -56,26 +56,34 @@ function AlbumPage() {
     qc.invalidateQueries({ queryKey: ["watchlist"] });
   }
 
-  // Resolve album info: mock first, then DB log, then Spotify
+  // Resolve album info: mock first, then DB log, then Spotify. Always try Spotify for tracks.
   useEffect(() => {
     (async () => {
       const mock = getMockAlbum(id);
+      let base: AlbumInfo | null = null;
       if (mock) {
-        setInfo({ title: mock.title, artist: mock.artist, year: mock.year, cover: mockCoverFor(id) ?? null, genre: mock.genre });
-        setLoading(false); return;
+        base = { title: mock.title, artist: mock.artist, year: mock.year, cover: mockCoverFor(id) ?? null, genre: mock.genre };
+      } else {
+        const { data: anyLog } = await supabase
+          .from("album_logs").select("title, artist, year, cover_url, genre")
+          .eq("album_key", id).limit(1).maybeSingle();
+        if (anyLog) base = { title: anyLog.title, artist: anyLog.artist, year: anyLog.year, cover: anyLog.cover_url, genre: anyLog.genre };
       }
-      const { data: anyLog } = await supabase
-        .from("album_logs").select("title, artist, year, cover_url, genre")
-        .eq("album_key", id).limit(1).maybeSingle();
-      if (anyLog) {
-        setInfo({ title: anyLog.title, artist: anyLog.artist, year: anyLog.year, cover: anyLog.cover_url, genre: anyLog.genre });
-        setLoading(false); return;
+      // Try Spotify (also brings tracks). Spotify IDs are 22-char base62.
+      if (/^[A-Za-z0-9]{22}$/.test(id)) {
+        try {
+          const album = await getSpotifyAlbum(id);
+          base = {
+            title: base?.title ?? album.title,
+            artist: base?.artist ?? album.artist,
+            year: base?.year ?? album.year,
+            cover: base?.cover ?? album.cover,
+            genre: base?.genre ?? album.genre,
+            tracks: album.tracks,
+          };
+        } catch {}
       }
-      // Try Spotify
-      try {
-        const album = await getSpotifyAlbum(id);
-        setInfo({ title: album.title, artist: album.artist, year: album.year, cover: album.cover, genre: album.genre });
-      } catch {}
+      setInfo(base);
       setLoading(false);
     })();
   }, [id]);
@@ -83,12 +91,13 @@ function AlbumPage() {
   // Load my log
   useEffect(() => {
     if (!me) return;
-    supabase.from("album_logs").select("id, rating, review").eq("user_id", me.id).eq("album_key", id).maybeSingle()
+    supabase.from("album_logs").select("id, rating, review, best_track").eq("user_id", me.id).eq("album_key", id).maybeSingle()
       .then(({ data }) => {
         if (data) {
           setMyLogId(data.id);
           setRating(data.rating ?? 0);
           setReview(data.review ?? "");
+          setBestTrack((data as any).best_track ?? null);
           setLogged(true);
         }
       });
