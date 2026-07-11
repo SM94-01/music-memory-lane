@@ -1,0 +1,1 @@
+ALTER TABLE public.album_logs ADD COLUMN IF NOT EXISTS best_track TEXT;

@@ -18,6 +18,7 @@ export type Database = {
         Row: {
           album_key: string
           artist: string
+          best_track: string | null
           cover_url: string | null
           created_at: string
           genre: string | null
@@ -32,6 +33,7 @@ export type Database = {
         Insert: {
           album_key: string
           artist: string
+          best_track?: string | null
           cover_url?: string | null
           created_at?: string
           genre?: string | null
@@ -46,6 +48,7 @@ export type Database = {
         Update: {
           album_key?: string
           artist?: string
+          best_track?: string | null
           cover_url?: string | null
           created_at?: string
           genre?: string | null
