@@ -32,6 +32,8 @@ function AlbumPage() {
   const [saving, setSaving] = useState(false);
   const [watchId, setWatchId] = useState<string | null>(null);
   const [shareOpen, setShareOpen] = useState(false);
+  const [bestTrack, setBestTrack] = useState<string | null>(null);
+  const [pickerOpen, setPickerOpen] = useState(false);
 
   useEffect(() => {
     if (!me) return;
