@@ -114,26 +114,41 @@ function rankArtists(items: SpotifyArtist[], genres: string[]) {
 }
 
 function SuggestedFeed({ kind, genres }: { kind: "albums" | "artists"; genres: string[] }) {
-  const enabled = genres.length > 0;
   const { data, isLoading } = useQuery({
-    queryKey: ["suggested-mb", kind, genres.join("|")],
-    enabled,
+    queryKey: ["suggested-spotify", kind, genres.join("|")],
     queryFn: async () => {
-      return searchSpotifyByGenre(kind, genres[0]);
+      if (genres.length > 0) {
+        // Merge results from top genres for variety
+        const picks = genres.slice(0, 3);
+        const chunks = await Promise.all(picks.map((g) => searchSpotifyByGenre(kind, g)));
+        const seen = new Set<string>();
+        const merged: any[] = [];
+        for (const chunk of chunks) {
+          for (const it of chunk) {
+            if (seen.has(it.id)) continue;
+            seen.add(it.id);
+            merged.push(it);
+          }
+        }
+        if (merged.length) return merged;
+      }
+      return getSpotifyFeatured(kind);
     },
   });
 
-  if (!enabled) {
-    return (
-      <p className="text-sm text-muted leading-relaxed mt-8">
-        Log a few albums and we'll start suggesting {kind} that match your taste. For now, search anything above.
-      </p>
-    );
-  }
   if (isLoading) return <div className="py-6 flex justify-center"><Loader2 className="size-5 animate-spin text-muted" /></div>;
-  return kind === "albums"
-    ? <AlbumResults items={(data as SpotifyAlbum[]) ?? []} empty={false} />
-    : <ArtistResults items={(data as SpotifyArtist[]) ?? []} empty={false} />;
+  const items = (data as any[]) ?? [];
+  return (
+    <>
+      <h3 className="text-[10px] font-mono uppercase tracking-widest text-accent mb-3 flex items-center gap-1.5">
+        <Sparkles className="size-3" />
+        {genres.length > 0 ? `Suggested ${kind} for you` : `Popular ${kind} right now`}
+      </h3>
+      {kind === "albums"
+        ? <AlbumResults items={items as SpotifyAlbum[]} empty={false} />
+        : <ArtistResults items={items as SpotifyArtist[]} empty={false} />}
+    </>
+  );
 }
 
 function AlbumResults({ items, empty }: { items: SpotifyAlbum[]; empty: boolean }) {
