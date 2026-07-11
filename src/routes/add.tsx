@@ -8,7 +8,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useMyProfile } from "@/lib/auth";
 import { fetchTasteFingerprint } from "@/lib/taste";
 import { AlbumCover } from "@/components/AlbumCover";
-import { searchSpotifyAlbums, searchSpotifyArtists, searchSpotifyByGenre, type SpotifyAlbum, type SpotifyArtist } from "@/lib/spotify";
+import { searchSpotifyAlbums, searchSpotifyArtists, searchSpotifyByGenre, getSpotifyFeatured, type SpotifyAlbum, type SpotifyArtist } from "@/lib/spotify";
 
 export const Route = createFileRoute("/add")({
   head: () => ({ meta: [{ title: "Add music — TraX" }] }),
