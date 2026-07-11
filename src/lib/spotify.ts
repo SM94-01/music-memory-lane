@@ -50,6 +50,11 @@ export async function searchSpotifyByGenre(kind: "albums" | "artists", genre: st
   return kind === "albums" ? result.albums ?? [] : result.artists ?? [];
 }
 
+export async function getSpotifyFeatured(kind: "albums" | "artists") {
+  const result = await invokeSpotify<{ albums?: SpotifyAlbum[]; artists?: SpotifyArtist[] }>({ action: "featured", kind, limit: 10 });
+  return kind === "albums" ? result.albums ?? [] : result.artists ?? [];
+}
+
 export async function getSpotifyAlbum(id: string) {
   const result = await invokeSpotify<{ album: SpotifyAlbum }>({ action: "album", id });
   return result.album;
