@@ -123,6 +123,7 @@ function AlbumPage() {
       user_id: me.id, album_key: id, title: info.title, artist: info.artist,
       year: info.year, cover_url: info.cover, genre: info.genre,
       rating: rating || null, review: review || null,
+      best_track: bestTrack || null,
     };
     if (myLogId) {
       await supabase.from("album_logs").update(payload).eq("id", myLogId);
@@ -138,7 +139,7 @@ function AlbumPage() {
   async function unlog() {
     if (!myLogId) return;
     await supabase.from("album_logs").delete().eq("id", myLogId);
-    setMyLogId(null); setLogged(false); setRating(0); setReview("");
+    setMyLogId(null); setLogged(false); setRating(0); setReview(""); setBestTrack(null);
     qc.invalidateQueries();
   }
 
