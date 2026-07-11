@@ -1,5 +1,12 @@
 import { supabase } from "@/integrations/supabase/client";
 
+export type SpotifyTrack = {
+  id: string;
+  name: string;
+  track_number: number | null;
+  duration_ms: number | null;
+};
+
 export type SpotifyAlbum = {
   id: string;
   title: string;
@@ -8,6 +15,7 @@ export type SpotifyAlbum = {
   cover: string | null;
   genre: string | null;
   type?: string | null;
+  tracks?: SpotifyTrack[];
 };
 
 export type SpotifyArtist = {
@@ -39,6 +47,11 @@ export async function searchSpotifyArtists(query: string) {
 
 export async function searchSpotifyByGenre(kind: "albums" | "artists", genre: string) {
   const result = await invokeSpotify<{ albums?: SpotifyAlbum[]; artists?: SpotifyArtist[] }>({ action: "genre", kind, genre, limit: 10 });
+  return kind === "albums" ? result.albums ?? [] : result.artists ?? [];
+}
+
+export async function getSpotifyFeatured(kind: "albums" | "artists") {
+  const result = await invokeSpotify<{ albums?: SpotifyAlbum[]; artists?: SpotifyArtist[] }>({ action: "featured", kind, limit: 10 });
   return kind === "albums" ? result.albums ?? [] : result.artists ?? [];
 }
 

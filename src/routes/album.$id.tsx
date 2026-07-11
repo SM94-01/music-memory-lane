@@ -3,16 +3,16 @@ import { MobileShell } from "@/components/MobileShell";
 import { Stars } from "@/components/Stars";
 import { Avatar } from "@/components/Avatar";
 import { useEffect, useState } from "react";
-import { ArrowLeft, Check, Bookmark, BookmarkCheck, Loader2, Send } from "lucide-react";
+import { ArrowLeft, Check, Bookmark, BookmarkCheck, Loader2, Send, Music2, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useMyProfile } from "@/lib/auth";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { getMockAlbum, mockCoverFor } from "@/data/mock";
 import { AlbumCover } from "@/components/AlbumCover";
 import { ShareAlbumDialog } from "@/components/ShareAlbumDialog";
-import { getSpotifyAlbum } from "@/lib/spotify";
+import { getSpotifyAlbum, type SpotifyTrack } from "@/lib/spotify";
 
-type AlbumInfo = { title: string; artist: string; year: number | null; cover: string | null; genre: string | null };
+type AlbumInfo = { title: string; artist: string; year: number | null; cover: string | null; genre: string | null; tracks?: SpotifyTrack[] };
 
 export const Route = createFileRoute("/album/$id")({
   component: AlbumPage,
@@ -32,6 +32,8 @@ function AlbumPage() {
   const [saving, setSaving] = useState(false);
   const [watchId, setWatchId] = useState<string | null>(null);
   const [shareOpen, setShareOpen] = useState(false);
+  const [bestTrack, setBestTrack] = useState<string | null>(null);
+  const [pickerOpen, setPickerOpen] = useState(false);
 
   useEffect(() => {
     if (!me) return;
@@ -54,26 +56,34 @@ function AlbumPage() {
     qc.invalidateQueries({ queryKey: ["watchlist"] });
   }
 
-  // Resolve album info: mock first, then DB log, then Spotify
+  // Resolve album info: mock first, then DB log, then Spotify. Always try Spotify for tracks.
   useEffect(() => {
     (async () => {
       const mock = getMockAlbum(id);
+      let base: AlbumInfo | null = null;
       if (mock) {
-        setInfo({ title: mock.title, artist: mock.artist, year: mock.year, cover: mockCoverFor(id) ?? null, genre: mock.genre });
-        setLoading(false); return;
+        base = { title: mock.title, artist: mock.artist, year: mock.year, cover: mockCoverFor(id) ?? null, genre: mock.genre };
+      } else {
+        const { data: anyLog } = await supabase
+          .from("album_logs").select("title, artist, year, cover_url, genre")
+          .eq("album_key", id).limit(1).maybeSingle();
+        if (anyLog) base = { title: anyLog.title, artist: anyLog.artist, year: anyLog.year, cover: anyLog.cover_url, genre: anyLog.genre };
       }
-      const { data: anyLog } = await supabase
-        .from("album_logs").select("title, artist, year, cover_url, genre")
-        .eq("album_key", id).limit(1).maybeSingle();
-      if (anyLog) {
-        setInfo({ title: anyLog.title, artist: anyLog.artist, year: anyLog.year, cover: anyLog.cover_url, genre: anyLog.genre });
-        setLoading(false); return;
+      // Try Spotify (also brings tracks). Spotify IDs are 22-char base62.
+      if (/^[A-Za-z0-9]{22}$/.test(id)) {
+        try {
+          const album = await getSpotifyAlbum(id);
+          base = {
+            title: base?.title ?? album.title,
+            artist: base?.artist ?? album.artist,
+            year: base?.year ?? album.year,
+            cover: base?.cover ?? album.cover,
+            genre: base?.genre ?? album.genre,
+            tracks: album.tracks,
+          };
+        } catch {}
       }
-      // Try Spotify
-      try {
-        const album = await getSpotifyAlbum(id);
-        setInfo({ title: album.title, artist: album.artist, year: album.year, cover: album.cover, genre: album.genre });
-      } catch {}
+      setInfo(base);
       setLoading(false);
     })();
   }, [id]);
@@ -81,12 +91,13 @@ function AlbumPage() {
   // Load my log
   useEffect(() => {
     if (!me) return;
-    supabase.from("album_logs").select("id, rating, review").eq("user_id", me.id).eq("album_key", id).maybeSingle()
+    supabase.from("album_logs").select("id, rating, review, best_track").eq("user_id", me.id).eq("album_key", id).maybeSingle()
       .then(({ data }) => {
         if (data) {
           setMyLogId(data.id);
           setRating(data.rating ?? 0);
           setReview(data.review ?? "");
+          setBestTrack((data as any).best_track ?? null);
           setLogged(true);
         }
       });
@@ -112,6 +123,7 @@ function AlbumPage() {
       user_id: me.id, album_key: id, title: info.title, artist: info.artist,
       year: info.year, cover_url: info.cover, genre: info.genre,
       rating: rating || null, review: review || null,
+      best_track: bestTrack || null,
     };
     if (myLogId) {
       await supabase.from("album_logs").update(payload).eq("id", myLogId);
@@ -127,7 +139,7 @@ function AlbumPage() {
   async function unlog() {
     if (!myLogId) return;
     await supabase.from("album_logs").delete().eq("id", myLogId);
-    setMyLogId(null); setLogged(false); setRating(0); setReview("");
+    setMyLogId(null); setLogged(false); setRating(0); setReview(""); setBestTrack(null);
     qc.invalidateQueries();
   }
 
@@ -224,6 +236,35 @@ function AlbumPage() {
             <Send className="size-4" /> Share with a friend
           </button>
 
+          {info.tracks && info.tracks.length > 0 && (
+            <button
+              onClick={() => setPickerOpen(true)}
+              className="mt-3 w-full py-3 font-bold text-sm rounded-sm border border-border text-muted hover:text-accent hover:border-accent flex items-center justify-center gap-2"
+            >
+              <Music2 className="size-4" />
+              {bestTrack ? `Best track: ${bestTrack}` : "Pick best track (optional)"}
+            </button>
+          )}
+
+          {info.tracks && info.tracks.length > 0 && (
+            <div className="mt-10">
+              <h2 className="text-xs font-mono uppercase tracking-[0.2em] text-accent mb-4">Tracklist</h2>
+              <ul className="divide-y divide-border">
+                {info.tracks.map((t) => {
+                  const isBest = bestTrack === t.name;
+                  return (
+                    <li key={t.id} className="py-2.5 flex items-center gap-3">
+                      <span className="text-[10px] font-mono text-muted w-5 text-right">{t.track_number ?? "•"}</span>
+                      <span className={`text-sm flex-1 truncate ${isBest ? "font-bold text-accent" : ""}`}>{t.name}</span>
+                      <span className="text-[10px] font-mono text-muted">{formatDuration(t.duration_ms)}</span>
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
+          )}
+
+
           <div className="mt-10">
             <h2 className="text-xs font-mono uppercase tracking-[0.2em] text-accent mb-4">Community reviews</h2>
             <div className="space-y-6">
@@ -245,6 +286,49 @@ function AlbumPage() {
         </section>
       </div>
       {shareOpen && <ShareAlbumDialog albumKey={id} album={info} onClose={() => setShareOpen(false)} />}
+      {pickerOpen && info.tracks && (
+        <div className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm flex items-end sm:items-center justify-center p-4" onClick={() => setPickerOpen(false)}>
+          <div className="w-full max-w-md bg-background border border-border rounded-sm max-h-[80vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between px-4 py-3 border-b border-border">
+              <h3 className="text-sm font-bold">Pick the best track</h3>
+              <button onClick={() => setPickerOpen(false)} className="text-muted hover:text-foreground"><X className="size-4" /></button>
+            </div>
+            <ul className="overflow-y-auto divide-y divide-border">
+              {bestTrack && (
+                <li>
+                  <button onClick={() => { setBestTrack(null); setPickerOpen(false); }} className="w-full py-3 px-4 text-left text-xs font-mono uppercase tracking-widest text-muted hover:text-destructive">
+                    Clear selection
+                  </button>
+                </li>
+              )}
+              {info.tracks.map((t) => {
+                const isBest = bestTrack === t.name;
+                return (
+                  <li key={t.id}>
+                    <button
+                      onClick={() => { setBestTrack(t.name); setPickerOpen(false); }}
+                      className={`w-full py-3 px-4 flex items-center gap-3 text-left ${isBest ? "bg-accent/10" : "hover:bg-secondary/40"}`}
+                    >
+                      <span className="text-[10px] font-mono text-muted w-5 text-right">{t.track_number ?? "•"}</span>
+                      <span className={`text-sm flex-1 truncate ${isBest ? "font-bold text-accent" : ""}`}>{t.name}</span>
+                      {isBest && <Check className="size-4 text-accent" />}
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
+            <p className="text-[10px] text-muted px-4 py-2 border-t border-border">Remember to press "Log listen" / "Update log" to save.</p>
+          </div>
+        </div>
+      )}
     </MobileShell>
   );
+}
+
+function formatDuration(ms: number | null | undefined) {
+  if (!ms) return "";
+  const total = Math.round(ms / 1000);
+  const m = Math.floor(total / 60);
+  const s = total % 60;
+  return `${m}:${s.toString().padStart(2, "0")}`;
 }

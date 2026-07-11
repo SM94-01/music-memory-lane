@@ -59,6 +59,12 @@ async function spotify<T>(path: string): Promise<T> {
 }
 
 function albumFromItem(item: any, genre: string | null = null) {
+  const tracks = (item.tracks?.items ?? []).map((t: any) => ({
+    id: t.id,
+    name: t.name,
+    track_number: t.track_number ?? null,
+    duration_ms: t.duration_ms ?? null,
+  }));
   return {
     id: item.id,
     title: item.name,
@@ -67,6 +73,7 @@ function albumFromItem(item: any, genre: string | null = null) {
     cover: largestImage(item.images),
     genre,
     type: item.album_type ?? "album",
+    tracks: tracks.length ? tracks : undefined,
   };
 }
 
@@ -144,6 +151,28 @@ Deno.serve(async (req) => {
         spotify<any>(`/artists/${encodeURIComponent(id)}/albums?${new URLSearchParams({ include_groups: "album" })}`),
       ]);
       return json(200, { artist: artistFromItem(artist, releases.items ?? []) });
+    }
+
+    if (action === "featured") {
+      const kind = body.kind === "artists" ? "artists" : "albums";
+      if (kind === "albums") {
+        const data = await spotify<any>(`/browse/new-releases?${new URLSearchParams({ limit: String(limit) })}`);
+        return json(200, { albums: (data.albums?.items ?? []).map((a: any) => albumFromItem(a)) });
+      }
+      // Popular artists — fetch new releases and dedupe artists
+      const data = await spotify<any>(`/browse/new-releases?${new URLSearchParams({ limit: String(limit) })}`);
+      const seen = new Set<string>();
+      const artistIds: string[] = [];
+      for (const alb of data.albums?.items ?? []) {
+        for (const a of alb.artists ?? []) {
+          if (a.id && !seen.has(a.id)) { seen.add(a.id); artistIds.push(a.id); }
+          if (artistIds.length >= limit) break;
+        }
+        if (artistIds.length >= limit) break;
+      }
+      if (!artistIds.length) return json(200, { artists: [] });
+      const artistsRes = await spotify<any>(`/artists?${new URLSearchParams({ ids: artistIds.join(",") })}`);
+      return json(200, { artists: (artistsRes.artists ?? []).map((a: any) => artistFromItem(a)) });
     }
 
     return json(400, { error: "Unknown action" });
